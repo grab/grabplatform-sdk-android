@@ -157,6 +157,13 @@ class GrabIdPartnerTest {
     }
 
     @Test
+    fun `verify loginSession has required parameters after loadLoginSession`() {
+        prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(FAKE_CLIENT_ID, FAKE_REDIRECT_URI, FAKE_DISCOVERY_URL, PARTNER_SCOPE)
+        loginSessionCallback.verifyOnSuccess(1)
+        loginSessionCallback.verifyAllRequiredParametersExists()
+    }
+
+    @Test
     fun `verify login with empty client id`() {
         prerequisiteToValidateLogin("", "", "", "")
 
@@ -512,6 +519,13 @@ class TestLoginSessionCallback : LoginSessionCallback {
 
     fun verifyOnSuccess(i: Int) {
         Mockito.verify(mockLoginSessionCallback, Times(i)).onSuccess(any())
+    }
+
+    fun verifyAllRequiredParametersExists(){
+        Assert.assertTrue(!this.loginSession?.codeVerifier.isNullOrBlank())
+        Assert.assertTrue(!this.loginSession?.state.isNullOrBlank())
+        Assert.assertTrue(!this.loginSession?.nonce.isNullOrBlank())
+        Assert.assertTrue(!this.loginSession?.codeChallenge.isNullOrBlank())
     }
 
     fun verifyOnError(expected: GrabIdPartnerError): Boolean {

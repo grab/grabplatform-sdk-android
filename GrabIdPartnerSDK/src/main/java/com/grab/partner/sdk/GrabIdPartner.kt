@@ -126,7 +126,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
             return
         }
         var loginSession = LoginSession()
-        loginSession.codeVerifier = utility.generateCodeVerifier()
+        loginSession.codeVerifierInternal = utility.generateCodeVerifier()
         loginSession.stateInternal = utility.getRandomString()
         loginSession.nonceInternal = utility.getRandomString()
         loginSession.codeChallenge = utility.generateCodeChallenge(loginSession.codeVerifier)

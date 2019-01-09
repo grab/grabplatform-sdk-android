@@ -303,7 +303,7 @@ internal class Utility(var context: Context) : IUtility {
             clientId = source.clientId
             scope = source.scope
             codeInternal = source.code
-            codeVerifier = source.codeVerifier
+            codeVerifierInternal = source.codeVerifier
             stateInternal = source.state
             tokenTypeInternal = source.tokenType
             nonceInternal = source.nonce
@@ -325,7 +325,7 @@ internal class Utility(var context: Context) : IUtility {
         loginSession.clientId = ""
         loginSession.scope = ""
         loginSession.codeInternal = ""
-        loginSession.codeVerifier = ""
+        loginSession.codeVerifierInternal = ""
         loginSession.stateInternal = ""
         loginSession.tokenTypeInternal = ""
         loginSession.nonceInternal = ""
