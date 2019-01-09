@@ -47,5 +47,5 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
     // dependency on GrabIdPartnerSDK sdk
-    implementation 'com.grab.grabidpartnersdk:GrabIdPartnerSDK:1.0.2'
+    implementation 'com.grab.grabidpartnersdk:GrabIdPartnerSDK:1.0.3'
 }
