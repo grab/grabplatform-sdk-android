@@ -32,7 +32,8 @@ class LoginSession {
     internal var codeInternal: String = EMPTY_STRING_CONST
     val code get() = codeInternal
 
-    internal var codeVerifier: String = EMPTY_STRING_CONST
+    internal var codeVerifierInternal: String = EMPTY_STRING_CONST
+    val codeVerifier get() = codeVerifierInternal
 
     internal var accessTokenExpiresAtInternal: Date? = null
     val accessTokenExpiresAt get() = accessTokenExpiresAtInternal
