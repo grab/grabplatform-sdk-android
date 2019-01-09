@@ -1,0 +1,33 @@
+<!--
+  ~ Copyright (c) 2012-2019 Grab Taxi Holdings PTE LTD (GRAB), All Rights Reserved. NOTICE: All information contained herein is, and remains the property of GRAB. The intellectual and technical concepts contained herein are confidential, proprietary and controlled by GRAB and may be covered by patents, patents in process, and are protected by trade secret or copyright law.
+  ~ You are strictly forbidden to copy, download, store (in any medium), transmit, disseminate, adapt or change this material in any way unless prior written permission is obtained from GRAB. Access to the source code contained herein is hereby forbidden to anyone except current GRAB employees or contractors with binding Confidentiality and Non-disclosure agreements explicitly covering such access.
+  ~
+  ~ The copyright notice above does not evidence any actual or intended publication or disclosure of this source code, which includes information that is confidential and/or proprietary, and is a trade secret, of GRAB.
+  ~ ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC PERFORMANCE, OR PUBLIC DISPLAY OF OR THROUGH USE OF THIS SOURCE CODE WITHOUT THE EXPRESS WRITTEN CONSENT OF GRAB IS STRICTLY PROHIBITED, AND IN VIOLATION OF APPLICABLE LAWS AND INTERNATIONAL TREATIES. THE RECEIPT OR POSSESSION OF THIS SOURCE CODE AND/OR RELATED INFORMATION DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS, OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT MAY DESCRIBE, IN WHOLE OR IN PART.
+  -->
+
+<resources>
+    <string name="app_name">grab_auth</string>
+    <string name="ERROR_CONTEXT_IS_NULL">Application context cannot be null.</string>
+    <string name="ERROR_MISSING_CLIENT_ID">Client Id must be defined in AndroidManifest.</string>
+    <string name="ERROR_MISSING_CODE">Code is null or empty.</string>
+    <string name="ERROR_STATE_MISMATCH">State received from redirect url does not match with loginSession state.</string>
+    <string name="ERROR_MISSING_REDIRECT_URI">Redirect uri must be defined in AndroidManifest.</string>
+    <string name="ERROR_NULL_DISCOVERY_ENDPOINT_RESPONSE">Discovery endpoint response is null.</string>
+    <string name="ERROR_MISSING_AUTHORIZE_ENDPOINT_IN_DISCOVERY_ENDPOINT">Authorize endpoint is missing in discovery endpoint response.</string>
+    <string name="ERROR_MISSING_TOKEN_ENDPOINT_IN_DISCOVERY_ENDPOINT">Token endpoint is missing in discovery endpoint response.</string>
+    <string name="ERROR_MISSING_VERIFY_TOKEN_ENDPOINT_IN_DISCOVERY_ENDPOINT">Get id token endpoint is missing in discovery endpoint response.</string>
+    <string name="ERROR_NONCE_MISMATCH_GET_ID_TOKEN_INFO">Nonce inside loginSession and the server response does not match.</string>
+    <string name="ERROR_NULL_EXCHANGE_TOKEN_RESPONSE">Exchange token endpoint response is null.</string>
+    <string name="ERROR_MISSING_ACCESS_TOKEN">access_token is missing in token endpoint response.</string>
+    <string name="ERROR_MISSING_ID_TOKEN">id_token is missing in token endpoint response.</string>
+    <string name="ERROR_MISSING_ACCESS_TOKEN_EXPIRY">expires_in is missing in token endpoint response.</string>
+    <string name="ERROR_ENCRYPTION_DATA_IS_NULL">Encryption data is null</string>
+    <string name="ERROR_MISSING_DISCOVERY_ENDPOINT">Discovery endpoint is missing inside sdk.</string>
+    <string name="ERROR_DISCOVERY_ENDPOINT">Error occurred while fetching discovery endpoint</string>
+    <string name="ERROR_MISSING_PARTNER_SCOPE">Scope must be defined in AndroidManifest.</string>
+    <string name="ERROR_SDK_IS_NOT_INITIALIZED">SDK must be initialized before calling other methods.</string>
+    <string name="ERROR_LOGIN_SESSION_NULL">Supplied loginSession is null</string>
+    <string name="ERROR_MISSING_TOKEN_ENDPOINT_IN_LOGINSESSION">Supplied loginSession does not have any token exchange endpoint</string>
+    <string name="ERROR_MISSING_ID_TOKEN_VERIFICATION_ENDPOINT_IN_LOGINSESSION">Supplied loginSession does not have any ID token verification endpoint</string>
+</resources>

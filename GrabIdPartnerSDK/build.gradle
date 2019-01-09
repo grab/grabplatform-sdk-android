@@ -1,0 +1,100 @@
+/*
+ * Copyright (c) 2012-2019 Grab Taxi Holdings PTE LTD (GRAB), All Rights Reserved. NOTICE: All information contained herein is, and remains the property of GRAB. The intellectual and technical concepts contained herein are confidential, proprietary and controlled by GRAB and may be covered by patents, patents in process, and are protected by trade secret or copyright law.
+ * You are strictly forbidden to copy, download, store (in any medium), transmit, disseminate, adapt or change this material in any way unless prior written permission is obtained from GRAB. Access to the source code contained herein is hereby forbidden to anyone except current GRAB employees or contractors with binding Confidentiality and Non-disclosure agreements explicitly covering such access.
+ *
+ * The copyright notice above does not evidence any actual or intended publication or disclosure of this source code, which includes information that is confidential and/or proprietary, and is a trade secret, of GRAB.
+ * ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC PERFORMANCE, OR PUBLIC DISPLAY OF OR THROUGH USE OF THIS SOURCE CODE WITHOUT THE EXPRESS WRITTEN CONSENT OF GRAB IS STRICTLY PROHIBITED, AND IN VIOLATION OF APPLICABLE LAWS AND INTERNATIONAL TREATIES. THE RECEIPT OR POSSESSION OF THIS SOURCE CODE AND/OR RELATED INFORMATION DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS, OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT MAY DESCRIBE, IN WHOLE OR IN PART.
+ */
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'org.jetbrains.dokka-android'
+
+android {
+    compileSdkVersion 28
+    buildToolsVersion "28.0.3"
+
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+ext {
+    bintrayRepo =  project.getName()
+    bintrayName =  project.getName()
+    bintrayUserOrg = 'grab'
+
+    publishedGroupId = 'com.grab.grabidpartnersdk'
+    libraryName =  project.getName()
+    artifact =  project.getName()
+
+    libraryDescription = 'The GrabId Partner SDK allows users to sign in with their Grab account from third-party apps.'
+
+    siteUrl = 'https://github.com/grab/grabplatform-sdk-android'
+    gitUrl = 'https://github.com/grab/grabidpartnersdk-android.git'
+    githubRepository= 'grab/grabplatform-sdk-android'
+
+    libraryVersion = '1.0.2' // Current version of .aar in JCenter
+
+    licenseName = 'The MIT License'
+    licenseUrl = 'https://opensource.org/licenses/MIT'
+    allLicenses = ["MIT"]
+}
+
+    dependencies {
+        implementation fileTree(dir: 'libs', include: ['*.jar'])
+        implementation 'com.android.support:appcompat-v7:28.0.0'
+        testImplementation 'junit:junit:4.12'
+        androidTestImplementation 'com.android.support.test:runner:1.0.2'
+        androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+
+        // Kotlin
+        implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+        // Dagger 2
+        implementation 'com.google.dagger:dagger:2.11'
+        kapt 'com.google.dagger:dagger-compiler:2.11'
+        compileOnly 'org.glassfish:javax.annotation:10.0-b28'
+
+        // retrofit
+        implementation "com.squareup.retrofit2:retrofit:2.3.0"
+        implementation "com.squareup.retrofit2:adapter-rxjava2:2.3.0"
+        implementation "com.squareup.retrofit2:converter-gson:2.3.0"
+
+        // rxandroid
+        implementation "io.reactivex.rxjava2:rxandroid:2.0.1"
+
+        // Chrome custom tab
+        implementation "com.android.support:customtabs:28.0.0"
+
+        //Logging Interceptor
+        implementation 'com.squareup.okhttp3:logging-interceptor:3.11.0'
+
+        // mockito
+        testImplementation 'org.mockito:mockito-core:2.21.0'
+        testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.0.0-RC2"
+
+        // PowerMock
+        testImplementation "org.powermock:powermock-module-junit4:1.6.4"
+        testImplementation "org.powermock:powermock-api-mockito2:2.0.0-beta.5"
+    }
+
+//gradle files to publish the .aar to Bintray
+apply from: './libs/install.gradle'
+apply from: './libs/bintray.gradle'
