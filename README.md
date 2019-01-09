@@ -1,4 +1,5 @@
 # GrabID Partner SDK - Android
+[ ![Download](https://api.bintray.com/packages/grab/GrabIdPartnerSDK/GrabIdPartnerSDK/images/download.svg) ](https://bintray.com/grab/GrabIdPartnerSDK/GrabIdPartnerSDK/_latestVersion)
 
 The GrabId Partner SDK allows users to sign in with their Grab account from third-party apps.
 
