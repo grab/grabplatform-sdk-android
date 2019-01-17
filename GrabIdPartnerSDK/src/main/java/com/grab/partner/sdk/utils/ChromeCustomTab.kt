@@ -64,7 +64,7 @@ internal class ChromeCustomTab : IChromeCustomTab {
             builder.appendQueryParameter("request", loginSession.request)
         }
         if (!loginSession.loginHint.isNullOrBlank()) {
-            builder.appendQueryParameter("login_hint", loginSession.loginHint)
+            builder.appendQueryParameter("id_token_hint", loginSession.loginHint)
         }
 
 
