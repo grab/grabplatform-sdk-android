@@ -34,7 +34,7 @@ Add the following snippet, replacing the placeholders within the square brackets
 <meta-dataandroid:name="com.grab.partner.sdk.Scope" android:value="[obtain from GrabId team]" />
 <meta-dataandroid:name="com.grab.partner.sdk.AcrValues" android:value="[optional parameter: sample value: consent_ctx:countryCode=SG service:PASSENGER, if presence this will add query string parameter &acr_values=<acr value string> in the /authorize api call]" />
 <meta-dataandroid:name="com.grab.partner.sdk.Request" android:value="[optional parameter: if presence this will add query string parameter &request=<request string> in the /authorize api call]" />
-<meta-dataandroid:name="com.grab.partner.sdk.LoginHint" android:value="[optional parameter: if presence this will add query string parameter &login_hint=<login hint string> in the /authorize api call]" />
+<meta-dataandroid:name="com.grab.partner.sdk.LoginHint" android:value="[optional parameter: if presence this will add query string parameter &id_token_hint=<login hint string> in the /authorize api call]" />
 <meta-dataandroid:name="com.grab.partner.sdk.ServiceDiscoveryUrl" android:value="[obtain from GrabId team]" />
 ```
 
