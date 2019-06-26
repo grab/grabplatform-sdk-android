@@ -12,7 +12,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
 import android.util.Log
-import com.grab.partner.sdk.GrabIdPartner.Companion.applicationContext
 import com.grab.partner.sdk.models.DiscoveryResponse
 import com.grab.partner.sdk.models.GrabIdPartnerError
 import com.grab.partner.sdk.models.GrabIdPartnerErrorCode
@@ -24,6 +23,7 @@ import com.grab.partner.sdk.scheduleprovider.TestSchedulerProvider
 import com.grab.partner.sdk.utils.Utility
 import com.nhaarman.mockitokotlin2.any
 import io.reactivex.Observable
+import io.reactivex.disposables.CompositeDisposable
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -54,6 +54,7 @@ class GrabIdPartnerTest {
     private var keyPair = PowerMockito.mock(KeyPair::class.java)
     private var androidKeyStoreWrapper = StubAndroidKeyStoreWrapper(keyPair)
     private var cipherWrapper = StubCipherWrapper()
+    private var compositeDisposable = CompositeDisposable()
 
     private val FAKE_CLIENT_ID = "fake_client_id"
     private val FAKE_REDIRECT_URI = "fake_redirectUri"
@@ -74,7 +75,6 @@ class GrabIdPartnerTest {
         PowerMockito.mockStatic(Log::class.java)
         testLoginCallback.reset()
         loginSessionCallback.reset()
-        applicationContext = context
         grabIdPartner.utility = utility
         grabIdPartner.grabAuthRepository = grabAuthRepository
         grabIdPartner.schedulerProvider = scheduleProvider
@@ -82,6 +82,7 @@ class GrabIdPartnerTest {
         grabIdPartner.chromeCustomTab = chromeCustomTab
         grabIdPartner.androidKeyStoreWrapper = androidKeyStoreWrapper
         grabIdPartner.cipherWrapper = cipherWrapper
+        grabIdPartner.compositeDisposable = compositeDisposable
     }
 
     @Test

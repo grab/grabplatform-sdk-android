@@ -11,7 +11,6 @@ package com.grab.partner.sdk
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
-import android.util.Log
 import com.google.gson.Gson
 import com.grab.partner.sdk.R.string.ERROR_MISSING_ACCESS_TOKEN
 import com.grab.partner.sdk.R.string.ERROR_MISSING_ACCESS_TOKEN_EXPIRY
@@ -28,7 +27,6 @@ import com.grab.partner.sdk.R.string.ERROR_MISSING_TOKEN_ENDPOINT_IN_LOGINSESSIO
 import com.grab.partner.sdk.R.string.ERROR_MISSING_VERIFY_TOKEN_ENDPOINT_IN_DISCOVERY_ENDPOINT
 import com.grab.partner.sdk.R.string.ERROR_NONCE_MISMATCH_GET_ID_TOKEN_INFO
 import com.grab.partner.sdk.R.string.ERROR_NULL_DISCOVERY_ENDPOINT_RESPONSE
-import com.grab.partner.sdk.R.string.ERROR_NULL_EXCHANGE_TOKEN_RESPONSE
 import com.grab.partner.sdk.R.string.ERROR_SDK_IS_NOT_INITIALIZED
 import com.grab.partner.sdk.R.string.ERROR_STATE_MISMATCH
 import com.grab.partner.sdk.api.GrabAuthRepository
@@ -43,12 +41,16 @@ import com.grab.partner.sdk.models.GrabIdPartnerErrorCode
 import com.grab.partner.sdk.models.GrabIdPartnerErrorDomain
 import com.grab.partner.sdk.models.IdTokenInfo
 import com.grab.partner.sdk.models.LoginSession
+import com.grab.partner.sdk.models.TokenAPIResponse
 import com.grab.partner.sdk.models.TokenRequest
 import com.grab.partner.sdk.scheduleprovider.SchedulerProvider
 import com.grab.partner.sdk.utils.IChromeCustomTab
 import com.grab.partner.sdk.utils.IUtility
 import com.grab.partner.sdk.utils.LogUtils
 import com.grab.partner.sdk.utils.ObjectType
+import io.reactivex.Completable
+import io.reactivex.Maybe
+import io.reactivex.disposables.CompositeDisposable
 import retrofit2.HttpException
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -62,10 +64,11 @@ internal const val PARTNER_LOGINHINT_VALUES_ATTRIBUTE = "com.grab.partner.sdk.Lo
 internal const val PARTNER_SCOPE_ATTRIBUTE = "com.grab.partner.sdk.Scope"
 internal const val PARTNER_SERVICE_DISCOVERY_URL = "com.grab.partner.sdk.ServiceDiscoveryUrl"
 internal const val GRANT_TYPE = "authorization_code"
+internal const val UNKNOWN_HTTP_EXCEPTION = "error: unknown http exception"
 
 class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
-    @Inject
-    internal lateinit var chromeCustomTab: IChromeCustomTab
+    @set:Inject
+    internal var chromeCustomTab: IChromeCustomTab? = null
     @Inject
     internal lateinit var grabAuthRepository: GrabAuthRepository
     @Inject
@@ -74,10 +77,12 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
     internal lateinit var sharedPreferences: SharedPreferences
     @Inject
     internal lateinit var utility: IUtility
-    @Inject
-    internal lateinit var androidKeyStoreWrapper: IAndroidKeyStoreWrapper
-    @Inject
-    internal lateinit var cipherWrapper: ICipher
+    private var applicationContext: Context? = null
+    @set:Inject
+    internal var androidKeyStoreWrapper: IAndroidKeyStoreWrapper? = null
+    @set:Inject
+    internal var cipherWrapper: ICipher? = null
+    internal var compositeDisposable: CompositeDisposable? = null
 
     private object Holder {
         val INSTANCE = GrabIdPartner()
@@ -86,7 +91,6 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
     companion object {
         val instance: GrabIdPartner by lazy { Holder.INSTANCE }
         internal var isSdkInitialized: Boolean = false
-        internal lateinit var applicationContext: Context
         internal const val CODE_CHALLENGE_METHOD: String = "S256"
         internal const val RESPONSE_TYPE: String = "code"
         internal const val RESPONSE_STATE: String = "state"
@@ -94,15 +98,19 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         internal const val ENCODING_SETTING = Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
     }
 
-    fun initialize(context: Context) {
+    override fun initialize(context: Context) {
         if (isSdkInitialized) {
             return
         }
 
+        if (context.applicationContext == null) {
+            return
+        }
         // Get the global application context of the current app.
         applicationContext = context.applicationContext
         // create Android keystore and Cipher classes
-        androidKeyStoreWrapper = AndroidKeyStoreWrapper(applicationContext)
+        androidKeyStoreWrapper = AndroidKeyStoreWrapper(context.applicationContext)
+
         cipherWrapper = CipherWrapper()
 
         // Dependency injection
@@ -112,7 +120,8 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                 .build()
 
         component.inject(this)
-        chromeCustomTab.speedUpChromeTabs()
+        compositeDisposable = CompositeDisposable()
+        chromeCustomTab?.speedUpChromeTabs() ?: return teardown()
         isSdkInitialized = true
     }
 
@@ -194,24 +203,30 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         }
 
         // check if user has previous valid access token in shared preference
-        var loginSessionFromCache: LoginSession? = null
-        try {
-            loginSessionFromCache = retrieveLoginSessionFromCache(loginSession)
-        } catch (exception: Exception) {
-            // log the exception and let user continue the login flow
-            val sw = StringWriter()
-            exception.printStackTrace(PrintWriter(sw))
-            LogUtils.debug("login", sw.toString())
-        }
+        compositeDisposable?.add(
+                retrieveLoginSessionFromCache(loginSession)
+                        .subscribeOn(schedulerProvider.io())
+                        .observeOn(schedulerProvider.ui())
+                        .subscribe({ loginSessionFromCache ->
+                            if (loginSessionFromCache != null) {
+                                utility.cloneLoginSession(loginSessionFromCache, loginSession)
+                                callback.onSuccess()
+                                return@subscribe
+                            }
+                        }, {
+                            // log the exception and let user continue the login flow
+                            val sw = StringWriter()
+                            it.printStackTrace(PrintWriter(sw))
+                            LogUtils.debug("login", sw.toString())
 
-        if (loginSessionFromCache != null) {
-            utility.cloneLoginSession(loginSessionFromCache, loginSession)
-            callback.onSuccess()
-            return
-        }
-
-        // call the discovery endpoint to fetch all the endpoints
-        callDiscovery(context, loginSession, callback)
+                            // call the discovery endpoint to fetch all the endpoints even in error case as we don't want to block the user
+                            callDiscovery(context, loginSession, callback)
+                        }, {
+                            // no cache data is available
+                            // call the discovery endpoint to fetch all the endpoints
+                            callDiscovery(context, loginSession, callback)
+                        })
+        )
     }
 
     /**
@@ -251,82 +266,86 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         loginSession.codeInternal = code
         loginSession.stateInternal = state
 
-        grabAuthRepository.getToken(tokenEndPoint, TokenRequest(code, loginSession.clientId, GRANT_TYPE, loginSession.redirectUri, loginSession.codeVerifier))
+        compositeDisposable?.add(grabAuthRepository.getToken(tokenEndPoint, TokenRequest(code, loginSession.clientId, GRANT_TYPE, loginSession.redirectUri, loginSession.codeVerifier))
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
-                .subscribe({ result ->
-                    // validate that response from the exchange token endpoint has required parameters
-                    if (result == null) {
-                        callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.errorInExchangeTokenEndpoint, utility.readResourceString(ERROR_NULL_EXCHANGE_TOKEN_RESPONSE), null))
-                        return@subscribe
-                    }
-
-                    var accesstoken = result.access_token
-                    if (accesstoken != null && !accesstoken.isBlank()) {
-                        // update the loginSession object
-                        loginSession.accessTokenInternal = accesstoken
-                    } else {
-                        callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.missingAccessToken, utility.readResourceString(ERROR_MISSING_ACCESS_TOKEN), null))
-                        return@subscribe
-                    }
-
-                    var idToken = result.id_token
-                    if (idToken != null && !idToken.isBlank()) {
-                        // update the loginSession object
-                        loginSession.idTokenInternal = idToken
-                    } else {
-                        callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.missingIdToken, utility.readResourceString(ERROR_MISSING_ID_TOKEN), null))
-                        return@subscribe
-                    }
-
-                    var expiresIn = result.expires_in
-                    if (expiresIn != null && !expiresIn.isBlank()) {
-                        loginSession.accessTokenExpiresAtInternal = utility.addSecondsToCurrentDate(expiresIn)
-                    } else {
-                        callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.missingAccessTokenExpiry, utility.readResourceString(ERROR_MISSING_ACCESS_TOKEN_EXPIRY), null))
-                        return@subscribe
-                    }
-
-                    // no error for missing refresh_token as this is currently optional
-                    if (result.refresh_token != null) {
-                        // update the loginSession object
-                        loginSession.refreshTokenInternal = result.refresh_token
-                    }
-
-                    if (result.token_type != null) {
-                        loginSession.tokenTypeInternal = result.token_type
-                    }
-
-                    // serialize loginSession object
-                    var gson = Gson()
-                    var serializedLoginSession = gson.toJson(loginSession)
-
-                    // encrypt entire loginSession object
-                    var encryptedString: String? = null
-                    try {
-                        val keyPair = androidKeyStoreWrapper.createAndroidKeyStoreAsymmetricKey(utility.generateKeystoreAlias(loginSession, ObjectType.LOGIN_SESSION))
-                        encryptedString = cipherWrapper.encrypt(serializedLoginSession, keyPair.public)
-                    } catch (exception: Exception) {
-                        // log the exception and let user continue the login flow
-                        val sw = StringWriter()
-                        exception.printStackTrace(PrintWriter(sw))
-                        LogUtils.debug("login", sw.toString())
-                    }
-
-                    // save loginSession to shared preference
-                    if (encryptedString != null) {
-                        utility.saveObjectsToSharedPref(loginSession, encryptedString, sharedPreferences, ObjectType.LOGIN_SESSION)
-                    }
-                    callback.onSuccess()
-                    return@subscribe
+                .flatMapCompletable {
+                    processLoginSessionResponse(loginSession, it, callback)
+                }
+                .subscribe({
                 }, { error ->
                     var errorJsonString = ""
                     if (error is HttpException) {
-                        errorJsonString = error.response().errorBody()?.string() ?: ""
+                        errorJsonString = error.response().errorBody()?.string()
+                                ?: UNKNOWN_HTTP_EXCEPTION
                     }
                     callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.network, errorJsonString, error))
                     return@subscribe
-                })
+                }))
+    }
+
+    private fun processLoginSessionResponse(loginSession: LoginSession, result: TokenAPIResponse, callback: ExchangeTokenCallback): Completable {
+        // validate that response from the exchange token endpoint has required parameters
+        var accessToken = result.access_token
+        if (!accessToken.isNullOrBlank()) {
+            // update the loginSession object
+            loginSession.accessTokenInternal = accessToken
+        } else {
+            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.missingAccessToken, utility.readResourceString(ERROR_MISSING_ACCESS_TOKEN), null))
+            return Completable.complete()
+        }
+
+        var idToken = result.id_token
+        if (!idToken.isNullOrBlank()) {
+            // update the loginSession object
+            loginSession.idTokenInternal = idToken
+        } else {
+            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.missingIdToken, utility.readResourceString(ERROR_MISSING_ID_TOKEN), null))
+            return Completable.complete()
+        }
+
+        var expiresIn = result.expires_in
+        if (!expiresIn.isNullOrBlank()) {
+            loginSession.accessTokenExpiresAtInternal = utility.addSecondsToCurrentDate(expiresIn)
+        } else {
+            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.missingAccessTokenExpiry, utility.readResourceString(ERROR_MISSING_ACCESS_TOKEN_EXPIRY), null))
+            return Completable.complete()
+        }
+
+        // no error for missing refresh_token as this is currently optional
+        if (result.refresh_token != null) {
+            // update the loginSession object
+            loginSession.refreshTokenInternal = result.refresh_token
+        }
+
+        if (result.token_type != null) {
+            loginSession.tokenTypeInternal = result.token_type
+        }
+
+        // serialize loginSession object
+        var gson = Gson()
+        var serializedLoginSession = gson.toJson(loginSession)
+
+        // encrypt entire loginSession object
+        var encryptedString: String? = null
+        try {
+            val keyPair = androidKeyStoreWrapper?.createAndroidKeyStoreAsymmetricKey(utility.generateKeystoreAlias(loginSession, ObjectType.LOGIN_SESSION))
+            encryptedString = cipherWrapper?.encrypt(serializedLoginSession, keyPair?.public)
+        } catch (exception: Exception) {
+            // log the exception and let user continue the login flow
+            val sw = StringWriter()
+            exception.printStackTrace(PrintWriter(sw))
+            LogUtils.debug("login", sw.toString())
+        }
+
+        // save loginSession to shared preference
+        if (encryptedString != null) {
+            sharedPreferences.let {
+                utility.saveObjectsToSharedPref(loginSession, encryptedString, sharedPreferences, ObjectType.LOGIN_SESSION)
+            }
+        }
+        callback.onSuccess()
+        return Completable.complete()
     }
 
     /**
@@ -340,60 +359,66 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         }
 
         // check if user has valid idTokenInfo in the shared preference
-        var idTokenInfoFromSharedPref: IdTokenInfo?
+        compositeDisposable?.add(
+                retrieveIdTokenInfoFromCache(loginSession)
+                        .subscribeOn(schedulerProvider.io())
+                        .observeOn(schedulerProvider.ui())
+                        .subscribe({ idTokenInfoFromSharedPref ->
+                            if (idTokenInfoFromSharedPref != null) {
+                                callback.onSuccess(idTokenInfoFromSharedPref)
+                                return@subscribe
+                            }
+                        }, {
+                            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.GETIDTOKENINFO, GrabIdPartnerErrorCode.errorRetrievingObjectFromSharedPref, it.localizedMessage, null))
+                            return@subscribe
+                        }, {
+                            // no cache available
+                            compositeDisposable?.add(grabAuthRepository.getIdTokenInfo(idTokenVerificationEndpoint, loginSession.clientId, loginSession.idToken, loginSession.nonce)
+                                    .subscribeOn(schedulerProvider.io())
+                                    .observeOn(schedulerProvider.ui())
+                                    .flatMapCompletable { processIdTokenInfoApiResponse(idTokenInfo = it, loginSession = loginSession, callback = callback) }
+                                    .subscribe({}, { error ->
+                                        var errorJsonString = ""
+                                        if (error is HttpException) {
+                                            errorJsonString = error.response().errorBody()?.string()
+                                                    ?: UNKNOWN_HTTP_EXCEPTION
+                                        }
+                                        callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.GETIDTOKENINFO, GrabIdPartnerErrorCode.errorInGetIdTokenInfo, errorJsonString, error))
+                                        return@subscribe
+                                    }))
+                        })
+        )
+    }
 
+    private fun processIdTokenInfoApiResponse(idTokenInfo: IdTokenInfo, loginSession: LoginSession, callback: GetIdTokenInfoCallback): Completable {
+        // validate nonce is matching with the one received from server
+        if (loginSession.nonce != idTokenInfo.nonce) {
+            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.GETIDTOKENINFO, GrabIdPartnerErrorCode.errorInGetIdTokenInfo, utility.readResourceString(ERROR_NONCE_MISMATCH_GET_ID_TOKEN_INFO), null))
+            return Completable.complete()
+        }
+
+        // serialize idTokenInfo object
+        var gson = Gson()
+        var serializedIdTokenInfo = gson.toJson(idTokenInfo)
+
+        // encrypt entire idTokenInfo object, Here we intentionally skipping the error callback if any exception occur. For any exception we still wants to send the token info to user and will skip the caching part.
+        var encryptedString: String? = null
         try {
-            idTokenInfoFromSharedPref = retrieveIdTokenInfoFromCache(loginSession)
-        } catch (ex: Exception) {
-            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.GETIDTOKENINFO, GrabIdPartnerErrorCode.errorRetrievingObjectFromSharedPref, ex.localizedMessage, null))
-            return
+            val keyPair = androidKeyStoreWrapper?.createAndroidKeyStoreAsymmetricKey(utility.generateKeystoreAlias(loginSession, ObjectType.ID_TOKEN_INFO))
+            encryptedString = cipherWrapper?.encrypt(serializedIdTokenInfo, keyPair?.public)
+        } catch (exception: Exception) {
+            // log the exception and let user continue the login flow
+            val sw = StringWriter()
+            exception.printStackTrace(PrintWriter(sw))
+            LogUtils.debug("login", sw.toString())
         }
 
-        if (idTokenInfoFromSharedPref != null) {
-            callback.onSuccess(idTokenInfoFromSharedPref)
-            return
+        // save idTokenInfoToSaveInSharedPreference to shared preference
+        if (encryptedString != null) {
+            utility.saveObjectsToSharedPref(loginSession, encryptedString, sharedPreferences, ObjectType.ID_TOKEN_INFO)
         }
-
-        grabAuthRepository.getIdTokenInfo(idTokenVerificationEndpoint, loginSession.clientId, loginSession.idToken, loginSession.nonce)
-                .subscribeOn(schedulerProvider.io())
-                .observeOn(schedulerProvider.ui())
-                .subscribe({
-                    // validate nonce is matching with the one received from server
-                    if (loginSession.nonce != it.nonce) {
-                        callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.GETIDTOKENINFO, GrabIdPartnerErrorCode.errorInGetIdTokenInfo, utility.readResourceString(ERROR_NONCE_MISMATCH_GET_ID_TOKEN_INFO), null))
-                        return@subscribe
-                    }
-
-                    // serialize idTokenInfo object
-                    var gson = Gson()
-                    var serializedIdTokenInfo = gson.toJson(it)
-
-                    // encrypt entire idTokenInfo object, Here we intentionally skipping the error callback if any exception occur. For any exception we still wants to send the token info to user and will skip the caching part.
-                    var encryptedString: String? = null
-                    try {
-                        val keyPair = androidKeyStoreWrapper.createAndroidKeyStoreAsymmetricKey(utility.generateKeystoreAlias(loginSession, ObjectType.ID_TOKEN_INFO))
-                        encryptedString = cipherWrapper.encrypt(serializedIdTokenInfo, keyPair.public)
-                    } catch (exception: Exception) {
-                        // log the exception and let user continue the login flow
-                        val sw = StringWriter()
-                        exception.printStackTrace(PrintWriter(sw))
-                        LogUtils.debug("login", sw.toString())
-                    }
-
-                    // save idTokenInfoToSaveInSharedPreference to shared preference
-                    if (encryptedString != null) {
-                        utility.saveObjectsToSharedPref(loginSession, encryptedString, sharedPreferences, ObjectType.ID_TOKEN_INFO)
-                    }
-                    callback.onSuccess(it)
-                    return@subscribe
-                }, { error ->
-                    var errorJsonString = ""
-                    if (error is HttpException) {
-                        errorJsonString = error.response().errorBody()?.string() ?: ""
-                    }
-                    callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.GETIDTOKENINFO, GrabIdPartnerErrorCode.errorInGetIdTokenInfo, errorJsonString, error))
-                    return@subscribe
-                })
+        callback.onSuccess(idTokenInfo)
+        return Completable.complete()
     }
 
     /**
@@ -407,6 +432,23 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
             callback.onSuccess()
         } catch (exception: Exception) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGOUT, GrabIdPartnerErrorCode.errorInLogout, exception.localizedMessage, null))
+        }
+    }
+
+    override fun teardown() {
+        try {
+            applicationContext = null
+            androidKeyStoreWrapper = null
+            cipherWrapper = null
+            chromeCustomTab = null
+            isSdkInitialized = false
+            // dispose all observable subscription
+            compositeDisposable?.clear()
+        } catch (exception: Exception) {
+            if (compositeDisposable?.isDisposed == false) {
+                compositeDisposable = null
+            }
+            LogUtils.debug("teardown", exception.toString())
         }
     }
 
@@ -443,7 +485,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
      * Call the discovery endpoint to get the URLs
      */
     private fun callDiscovery(context: Context, loginSession: LoginSession, callback: LoginCallback) {
-        grabAuthRepository.callDiscovery(loginSession.serviceDiscoveryUrl)
+        compositeDisposable?.add(grabAuthRepository.callDiscovery(loginSession.serviceDiscoveryUrl)
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .subscribe({ result ->
@@ -472,33 +514,34 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                         callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, utility.readResourceString(ERROR_MISSING_VERIFY_TOKEN_ENDPOINT_IN_DISCOVERY_ENDPOINT), null))
                         return@subscribe
                     }
-                    chromeCustomTab.openChromeCustomTab(context, loginSession, callback)
+                    chromeCustomTab?.openChromeCustomTab(context, loginSession, callback)
                 }, { error ->
                     var errorJsonString = ""
                     if (error is HttpException) {
-                        errorJsonString = error.response().errorBody()?.string() ?: ""
+                        errorJsonString = error.response().errorBody()?.string()
+                                ?: UNKNOWN_HTTP_EXCEPTION
                     }
                     callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, errorJsonString, error))
                     return@subscribe
-                })
+                }))
     }
 
     /**
      * Retrieve the loginSession from shared preference if exist, then decrypt the encrypted string using key store keys
      */
-    private fun retrieveLoginSessionFromCache(loginSession: LoginSession): LoginSession? {
+    private fun retrieveLoginSessionFromCache(loginSession: LoginSession): Maybe<LoginSession> {
         // check if we have valid token for this clientId and scope
         var encryptionData = utility.retrieveObjectFromSharedPref(loginSession, sharedPreferences, ObjectType.LOGIN_SESSION)
         if (encryptionData != null) {
             // decrypt the loginSessionEncrypted data
             var loginSessionDecryptedString: String?
             try {
-                var keyPair = androidKeyStoreWrapper.getAndroidKeyStoreAsymmetricKeyPair(utility.generateKeystoreAlias(loginSession, ObjectType.LOGIN_SESSION))
+                var keyPair = androidKeyStoreWrapper?.getAndroidKeyStoreAsymmetricKeyPair(utility.generateKeystoreAlias(loginSession, ObjectType.LOGIN_SESSION))
                 if (keyPair == null) {
                     deleteEntriesFromSharedPreferenceAndKeystore(loginSession, sharedPreferences)
-                    return null
+                    return Maybe.empty()
                 }
-                loginSessionDecryptedString = cipherWrapper.decrypt(encryptionData, keyPair.private)
+                loginSessionDecryptedString = cipherWrapper?.decrypt(encryptionData, keyPair.private)
             } catch (exception: Exception) {
                 // delete this entry from shared preferences and also delete the Android keystore keys, no use of keeping that as
                 // we not able to decrypt the encrypted string, this is to avoid any future failure
@@ -508,11 +551,11 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                 val sw = StringWriter()
                 exception.printStackTrace(PrintWriter(sw))
                 LogUtils.debug("retrieveLoginSessionFromCache", sw.toString())
-                return null
+                return Maybe.empty()
             }
 
             // deserialize to LoginSession object
-            var loginSessionFromCache = loginSessionDecryptedString.let { utility.serializeToLoginSession(it) }
+            var loginSessionFromCache = loginSessionDecryptedString.let { utility.serializeToLoginSession(it.toString()) }
 
             if (loginSessionFromCache != null) {
                 // check whether the accessToken still valid if not then clear all entries from shared preference and Android keystore
@@ -525,35 +568,35 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                         exception.printStackTrace(PrintWriter(sw))
                         LogUtils.debug("retrieveLoginSessionFromCache", sw.toString())
                     }
-                    return null
+                    return Maybe.empty()
 
                 } else {
-                    return loginSessionFromCache
+                    return Maybe.just(loginSessionFromCache)
                 }
 
             } else
-                return null
+                return Maybe.empty()
         } else
-            return null
+            return Maybe.empty()
     }
 
     /**
      * Retrieve the idTokenInfo from shared preference if exist, then decrypt the encrypted string using key store keys
      */
-    private fun retrieveIdTokenInfoFromCache(loginSession: LoginSession): IdTokenInfo? {
+    private fun retrieveIdTokenInfoFromCache(loginSession: LoginSession): Maybe<IdTokenInfo> {
         // check if we have valid IdTokenInfo for this clientId and scope
         var encryptionData = utility.retrieveObjectFromSharedPref(loginSession, sharedPreferences, ObjectType.ID_TOKEN_INFO)
         if (encryptionData != null) {
             // decrypt the idTokenInfoEncryptedData data
             var idTokenInfoDecryptedString: String?
             try {
-                var keyPair = androidKeyStoreWrapper.getAndroidKeyStoreAsymmetricKeyPair(utility.generateKeystoreAlias(loginSession, ObjectType.ID_TOKEN_INFO))
+                var keyPair = androidKeyStoreWrapper?.getAndroidKeyStoreAsymmetricKeyPair(utility.generateKeystoreAlias(loginSession, ObjectType.ID_TOKEN_INFO))
                 if (keyPair == null) {
                     deleteEntriesFromSharedPreferenceAndKeystore(loginSession, sharedPreferences)
-                    return null
+                    return Maybe.empty()
                 }
 
-                idTokenInfoDecryptedString = cipherWrapper.decrypt(encryptionData, keyPair.private)
+                idTokenInfoDecryptedString = cipherWrapper?.decrypt(encryptionData, keyPair.private)
             } catch (exception: Exception) {
                 // delete this entry from shared preferences and also delete the Android keystore keys, no use of keeping that as
                 // we not able to decrypt the encrypted string, this is to avoid any future failure
@@ -563,11 +606,11 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                 val sw = StringWriter()
                 exception.printStackTrace(PrintWriter(sw))
                 LogUtils.debug("retrieveIdTokenInfoFromCache", sw.toString())
-                return null
+                return Maybe.empty()
             }
 
             // deserialize to LoginSession object
-            var idTokenInfo = idTokenInfoDecryptedString.let { utility.serializeToIdTokenInfo(it) }
+            var idTokenInfo = idTokenInfoDecryptedString.let { utility.serializeToIdTokenInfo(it.toString()) }
 
             if (idTokenInfo != null) {
                 // check whether the idToken still valid if not then clear all entries from shared preference and Android keystore
@@ -581,15 +624,15 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                         exception.printStackTrace(PrintWriter(sw))
                         LogUtils.debug("retrieveIdTokenInfoFromCache", sw.toString())
                     }
-                    return null
+                    return Maybe.empty()
                 } else {
-                    return idTokenInfo
+                    return Maybe.just(idTokenInfo)
                 }
 
             } else
-                return null
+                return Maybe.empty()
         } else
-            return null
+            return Maybe.empty()
     }
 
     /**
@@ -598,7 +641,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
     private fun deleteEntriesFromSharedPreferenceAndKeystore(loginSession: LoginSession, sharedPreferences: SharedPreferences) {
         utility.deleteObjectsFromSharedPref(loginSession, sharedPreferences, ObjectType.LOGIN_SESSION)
         utility.deleteObjectsFromSharedPref(loginSession, sharedPreferences, ObjectType.ID_TOKEN_INFO)
-        androidKeyStoreWrapper.deleteKeys()
+        androidKeyStoreWrapper?.deleteKeys()
 
         // remove the token information from loginSession object
         loginSession.accessTokenInternal = ""
@@ -629,6 +672,11 @@ interface GetIdTokenInfoCallback {
 }
 
 interface LogoutCallback {
+    fun onSuccess()
+    fun onError(grabIdPartnerError: GrabIdPartnerError)
+}
+
+interface TearDownCallback {
     fun onSuccess()
     fun onError(grabIdPartnerError: GrabIdPartnerError)
 }
