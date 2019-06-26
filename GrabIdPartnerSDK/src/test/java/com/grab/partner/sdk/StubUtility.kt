@@ -31,7 +31,7 @@ class StubUtility : IUtility {
     private var objectFromSharedPreferences: String? = null
     private var idTokenInfo: IdTokenInfo? = null
 
-    override fun getPartnerInfo(context: Context, attribute: String): String? {
+    override fun getPartnerInfo(context: Context?, attribute: String): String? {
         return partnerInfoMap?.get(attribute)
     }
 

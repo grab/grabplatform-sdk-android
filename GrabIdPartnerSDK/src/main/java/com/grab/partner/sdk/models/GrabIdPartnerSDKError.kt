@@ -36,7 +36,8 @@ enum class GrabIdPartnerErrorCode {
     stateMismatch,                  // State received from the redirect url doesn't match with loginSession
     invalidNonce,                   // The nonce is invalid
     invalidResponse,                // Unexpected response from GrabId service
-    errorInLogout                   // Error in logout operation
+    errorInLogout,                  // Error in logout operation
+    errorInTearDown                 // Error in teardown
 }
 
 class GrabIdPartnerError(grabIdPartnerErrorDomain: GrabIdPartnerErrorDomain, code: GrabIdPartnerErrorCode, localizeMessage: String?, serviceError: Throwable?) {
@@ -60,6 +61,7 @@ enum class GrabIdPartnerErrorDomain {
     EXCHANGETOKEN,
     GETIDTOKENINFO,
     LOGOUT,
+    TEARDOWN,
     PROTECTED_RESOURCES,
     UNKNOWN
 }

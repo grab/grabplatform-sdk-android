@@ -38,7 +38,7 @@ internal interface IUtility {
      *
      * @param context The application context.
      */
-    fun getPartnerInfo(context: Context, attribute: String): String?
+    fun getPartnerInfo(context: Context?, attribute: String): String?
 
     /**
      * Retrieve the string values from the string.xml file
@@ -124,8 +124,8 @@ internal class Utility(var context: Context) : IUtility {
      *
      * @param context The application context.
      */
-    override fun getPartnerInfo(context: Context, attribute: String): String? {
-        val packageManager = context.packageManager ?: return null
+    override fun getPartnerInfo(context: Context?, attribute: String): String? {
+        val packageManager = context?.packageManager ?: return null
         val applicationInfo: ApplicationInfo?
         try {
             applicationInfo = packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA)
