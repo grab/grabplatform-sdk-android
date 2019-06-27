@@ -40,7 +40,7 @@ import java.util.UUID
 @RunWith(PowerMockRunner::class)
 @PrepareForTest(Base64::class, LoginSession::class, Utility::class, KeyStore::class, Log::class)
 class GrabIdPartnerTest {
-    private var grabIdPartner = GrabIdPartner.instance
+    private var grabIdPartner = GrabIdPartner.instance as GrabIdPartner
     private var loginSessionCallback = TestLoginSessionCallback()
     private var testLoginCallback = TestLoginCallback()
     private var testGetIdTokenInfoCallback = TestGetIdTokenInfoCallback()

@@ -89,7 +89,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
     }
 
     companion object {
-        val instance: GrabIdPartner by lazy { Holder.INSTANCE }
+        val instance: GrabIdPartnerProtocol by lazy { Holder.INSTANCE }
         internal var isSdkInitialized: Boolean = false
         internal const val CODE_CHALLENGE_METHOD: String = "S256"
         internal const val RESPONSE_TYPE: String = "code"
@@ -672,11 +672,6 @@ interface GetIdTokenInfoCallback {
 }
 
 interface LogoutCallback {
-    fun onSuccess()
-    fun onError(grabIdPartnerError: GrabIdPartnerError)
-}
-
-interface TearDownCallback {
     fun onSuccess()
     fun onError(grabIdPartnerError: GrabIdPartnerError)
 }
