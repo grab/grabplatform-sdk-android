@@ -31,7 +31,7 @@ import java.util.UUID
 private const val ENCODING = "UTF-8"
 internal const val UTC_TIMEZONE = "UTC"
 
-internal interface IUtility {
+interface IUtility {
     /**
      * Retrieve partner info which later will be used to verify partner.
      * The info should be registered inside AndroidManifest.xml in order to identify partner.

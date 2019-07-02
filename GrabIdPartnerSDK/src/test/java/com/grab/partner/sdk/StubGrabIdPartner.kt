@@ -8,6 +8,7 @@ import com.grab.partner.sdk.models.IdTokenInfo
 import com.grab.partner.sdk.models.LoginSession
 
 internal open class StubGrabIdPartner : GrabIdPartnerProtocol {
+
     var callbackStatus: Boolean = false
     var loginSession: LoginSession = LoginSession()
     var idTokenInfo: IdTokenInfo = IdTokenInfo()
@@ -22,6 +23,14 @@ internal open class StubGrabIdPartner : GrabIdPartnerProtocol {
     }
 
     override fun loadLoginSession(callback: LoginSessionCallback) {
+        if (callbackStatus) {
+            callback.onError(settableError)
+        } else {
+            callback.onSuccess(loginSession)
+        }
+    }
+
+    override fun loadLoginSession(state: String, clientId: String, redirectUri: String, serviceDiscoveryUrl: String, scope: String, acrValues: String?, request: String?, loginHint: String?, callback: LoginSessionCallback) {
         if (callbackStatus) {
             callback.onError(settableError)
         } else {

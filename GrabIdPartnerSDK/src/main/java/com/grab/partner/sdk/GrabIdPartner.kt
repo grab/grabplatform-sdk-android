@@ -180,6 +180,55 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         callback.onSuccess(loginSession)
     }
 
+    override fun loadLoginSession(state: String, clientId: String, redirectUri: String, serviceDiscoveryUrl: String,
+                                  scope: String, acrValues: String?, request: String?, loginHint: String?, callback:
+                                  LoginSessionCallback) {
+        // verify SDK has been initialized
+        if (!isSdkInitialized) {
+            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.sdkNotInitialized, utility.readResourceString(ERROR_SDK_IS_NOT_INITIALIZED), null))
+            return
+        }
+        var loginSession = LoginSession()
+        loginSession.codeVerifierInternal = utility.generateCodeVerifier()
+        loginSession.stateInternal = state
+        loginSession.nonceInternal = utility.getRandomString()
+        loginSession.codeChallenge = utility.generateCodeChallenge(loginSession.codeVerifier)
+
+        if (clientId == null || clientId.isEmpty()) {
+            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidClientId, utility.readResourceString(ERROR_MISSING_CLIENT_ID), null))
+            return
+        } else {
+            loginSession.clientId = clientId
+        }
+
+        if (redirectUri == null || redirectUri.isEmpty()) {
+            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidRedirectURI, utility.readResourceString(ERROR_MISSING_REDIRECT_URI), null))
+            return
+        } else {
+            loginSession.redirectUri = redirectUri
+        }
+
+        if (serviceDiscoveryUrl == null || serviceDiscoveryUrl.isEmpty()) {
+            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, utility.readResourceString(ERROR_MISSING_DISCOVERY_ENDPOINT), null))
+            return
+        } else {
+            loginSession.serviceDiscoveryUrl = serviceDiscoveryUrl
+        }
+
+        if (scope == null || scope.isEmpty()) {
+            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidPartnerScope, utility.readResourceString(ERROR_MISSING_PARTNER_SCOPE), null))
+            return
+        } else {
+            loginSession.scope = scope
+        }
+
+        loginSession.acrValues = acrValues ?: ""
+        loginSession.request = request ?: ""
+        loginSession.loginHint = loginHint ?: ""
+
+        callback.onSuccess(loginSession)
+    }
+
     /**
      * Login user using Grab ID Partner SDK
      */
