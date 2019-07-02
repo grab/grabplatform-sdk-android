@@ -230,6 +230,56 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
     }
 
     /**
+     * Login user using Grab ID Partner SDK with LoginCallbackV2 callback
+     * This API will invoke callback.onSuccessCache() when loginSession will be retrieved from cache
+     */
+    override fun login(loginSession: LoginSession, context: Context, callback: LoginCallbackV2) {
+        // validate if loginSession has all the required parameters
+        if (loginSession.clientId.isNullOrBlank()) {
+            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidClientId, utility.readResourceString(ERROR_MISSING_CLIENT_ID), null))
+            return
+        }
+        if (loginSession.redirectUri.isNullOrBlank()) {
+            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidRedirectURI, utility.readResourceString(ERROR_MISSING_REDIRECT_URI), null))
+            return
+        }
+        if (loginSession.scope.isNullOrBlank()) {
+            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidPartnerScope, utility.readResourceString(ERROR_MISSING_PARTNER_SCOPE), null))
+            return
+        }
+        if (loginSession.serviceDiscoveryUrl.isNullOrBlank()) {
+            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, utility.readResourceString(ERROR_MISSING_DISCOVERY_ENDPOINT), null))
+            return
+        }
+
+        // check if user has previous valid access token in shared preference
+        compositeDisposable?.add(
+                retrieveLoginSessionFromCache(loginSession)
+                        .subscribeOn(schedulerProvider.io())
+                        .observeOn(schedulerProvider.ui())
+                        .subscribe({ loginSessionFromCache ->
+                            if (loginSessionFromCache != null) {
+                                utility.cloneLoginSession(loginSessionFromCache, loginSession)
+                                callback.onSuccessCache()
+                                return@subscribe
+                            }
+                        }, {
+                            // log the exception and let user continue the login flow
+                            val sw = StringWriter()
+                            it.printStackTrace(PrintWriter(sw))
+                            LogUtils.debug("login", sw.toString())
+
+                            // call the discovery endpoint to fetch all the endpoints even in error case as we don't want to block the user
+                            callDiscovery(context, loginSession, callback)
+                        }, {
+                            // no cache data is available
+                            // call the discovery endpoint to fetch all the endpoints
+                            callDiscovery(context, loginSession, callback)
+                        })
+        )
+    }
+
+    /**
     Get the access token from token exchange endpoint
      */
     override fun exchangeToken(loginSession: LoginSession, redirectUrl: String, callback: ExchangeTokenCallback) {
@@ -659,6 +709,10 @@ interface LoginSessionCallback {
 interface LoginCallback {
     fun onSuccess()
     fun onError(grabIdPartnerError: GrabIdPartnerError)
+}
+
+interface LoginCallbackV2 : LoginCallback {
+    fun onSuccessCache()
 }
 
 interface ExchangeTokenCallback {

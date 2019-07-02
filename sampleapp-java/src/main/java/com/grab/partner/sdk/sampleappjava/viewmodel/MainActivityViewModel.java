@@ -25,7 +25,7 @@ import com.grab.partner.sdk.sampleappjava.databinding.ActivityMainBinding;
 import org.jetbrains.annotations.NotNull;
 
 public class MainActivityViewModel {
-    GrabIdPartner grabIdPartner = GrabIdPartner.Companion.getInstance();
+    GrabIdPartner grabIdPartner = (GrabIdPartner) GrabIdPartner.Companion.getInstance();
     private static LoginSession loginSession = null;
     private Context context = null;
     private String redirectUrl;

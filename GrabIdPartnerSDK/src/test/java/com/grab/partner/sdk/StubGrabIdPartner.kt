@@ -37,6 +37,14 @@ internal open class StubGrabIdPartner : GrabIdPartnerProtocol {
         }
     }
 
+    override fun login(loginSession: LoginSession, context: Context, callback: LoginCallbackV2) {
+        if (callbackStatus) {
+            callback.onError(settableError)
+        } else {
+            callback.onSuccessCache()
+        }
+    }
+
     override fun exchangeToken(loginSession: LoginSession, redirectUrl: String, callback: ExchangeTokenCallback) {
         if (callbackStatus) {
             callback.onError(settableError)

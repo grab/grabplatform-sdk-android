@@ -63,7 +63,7 @@ dependencies {
 
     //Logging Interceptor
     implementation 'com.squareup.okhttp3:logging-interceptor:3.11.0'
-
     // dependency on GrabIdPartnerSDK sdk
-    implementation 'com.grab.grabidpartnersdk:GrabIdPartnerSDK:1.0.5'
+    //implementation 'com.grab.grabidpartnersdk:GrabIdPartnerSDK:1.0.x'
+    implementation project(':GrabIdPartnerSDK')
 }

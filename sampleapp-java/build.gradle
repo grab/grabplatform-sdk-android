@@ -45,7 +45,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-
     // dependency on GrabIdPartnerSDK sdk
-    implementation 'com.grab.grabidpartnersdk:GrabIdPartnerSDK:1.0.5'
+    //implementation 'com.grab.grabidpartnersdk:GrabIdPartnerSDK:1.0.x'
+    implementation project(':GrabIdPartnerSDK')
 }
