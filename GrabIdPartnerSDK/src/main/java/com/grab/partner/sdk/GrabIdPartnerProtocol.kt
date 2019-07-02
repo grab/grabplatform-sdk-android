@@ -16,6 +16,7 @@ interface GrabIdPartnerProtocol {
     fun initialize(context: Context)
     fun loadLoginSession(callback: LoginSessionCallback)
     fun login(loginSession: LoginSession, context: Context, callback: LoginCallback)
+    fun login(loginSession: LoginSession, context: Context, callback: LoginCallbackV2)
     fun exchangeToken(loginSession: LoginSession, redirectUrl: String, callback: ExchangeTokenCallback)
     fun getIdTokenInfo(loginSession: LoginSession, callback: GetIdTokenInfoCallback)
     fun logout(loginSession: LoginSession, callback: LogoutCallback)
