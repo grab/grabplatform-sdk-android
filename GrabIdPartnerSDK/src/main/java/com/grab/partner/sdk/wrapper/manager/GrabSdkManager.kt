@@ -17,6 +17,7 @@ interface GrabSdkManager {
         // Used by app for one time transactions scenario - base64 encoded jwt
         var request: String? = EMPTY_STRING_CONST
         var loginHint: String? = EMPTY_STRING_CONST
+        var idTokenHint: String? = EMPTY_STRING_CONST
         // The OpenID Connect ACR optional parameter to the authorize endpoint will be utilized to pass in
         // service id info and device ID
         var acrValues: String? = EMPTY_STRING_CONST
@@ -54,6 +55,11 @@ interface GrabSdkManager {
 
         fun loginHint(loginHint: String): Builder {
             this.loginHint = loginHint
+            return this
+        }
+
+        fun idTokenHint(idTokenHint: String): Builder {
+            this.idTokenHint = idTokenHint
             return this
         }
 

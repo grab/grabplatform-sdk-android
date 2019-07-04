@@ -295,11 +295,9 @@ class GrabIdPartnerTest {
 
     @Test
     fun `verify exchangeToken with getToken api return without id_token`() {
-        prerequisiteToValidateExchangeToken(TEST_RESPONSE_TYPE, TEST_RESPONSE_STATE, TEST_RESPONSE_STATE, FAKE_TOKEN_ENDPOINT, TEST_ACCESS_TOKEN, "", "")
+        prerequisiteToValidateExchangeToken(TEST_RESPONSE_TYPE, TEST_RESPONSE_STATE, TEST_RESPONSE_STATE, FAKE_TOKEN_ENDPOINT, TEST_ACCESS_TOKEN, "", TEST_EXPIRY_TIME)
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.missingIdToken, CONST_READ_RESOURCE_STRING, null)
-        Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
-        testLoginCallback.verifyOnSuccess(0)
+        testLoginCallback.verifyOnSuccess(1)
     }
 
     @Test

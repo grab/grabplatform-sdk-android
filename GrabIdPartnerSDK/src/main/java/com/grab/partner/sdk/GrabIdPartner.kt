@@ -61,6 +61,7 @@ internal const val PARTNER_REDIRECT_URI_ATTRIBUTE = "com.grab.partner.sdk.Redire
 internal const val PARTNER_ACR_VALUES_ATTRIBUTE = "com.grab.partner.sdk.AcrValues"
 internal const val PARTNER_REQUEST_VALUES_ATTRIBUTE = "com.grab.partner.sdk.Request"
 internal const val PARTNER_LOGINHINT_VALUES_ATTRIBUTE = "com.grab.partner.sdk.LoginHint"
+internal const val PARTNER_IDTOKENHINT_VALUES_ATTRIBUTE = "com.grab.partner.sdk.IDTokenHint"
 internal const val PARTNER_SCOPE_ATTRIBUTE = "com.grab.partner.sdk.Scope"
 internal const val PARTNER_SERVICE_DISCOVERY_URL = "com.grab.partner.sdk.ServiceDiscoveryUrl"
 internal const val GRANT_TYPE = "authorization_code"
@@ -176,12 +177,14 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         loginSession.acrValues = utility.getPartnerInfo(applicationContext, PARTNER_ACR_VALUES_ATTRIBUTE) ?: ""
         loginSession.request = utility.getPartnerInfo(applicationContext, PARTNER_REQUEST_VALUES_ATTRIBUTE) ?: ""
         loginSession.loginHint = utility.getPartnerInfo(applicationContext, PARTNER_LOGINHINT_VALUES_ATTRIBUTE) ?: ""
+        loginSession.idTokenHint = utility.getPartnerInfo(applicationContext, PARTNER_IDTOKENHINT_VALUES_ATTRIBUTE)
+                ?: ""
 
         callback.onSuccess(loginSession)
     }
 
     override fun loadLoginSession(state: String, clientId: String, redirectUri: String, serviceDiscoveryUrl: String,
-                                  scope: String, acrValues: String?, request: String?, loginHint: String?, callback:
+                                  scope: String, acrValues: String?, request: String?, loginHint: String?, idTokenHint: String?, callback:
                                   LoginSessionCallback) {
         // verify SDK has been initialized
         if (!isSdkInitialized) {
@@ -225,6 +228,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         loginSession.acrValues = acrValues ?: ""
         loginSession.request = request ?: ""
         loginSession.loginHint = loginHint ?: ""
+        loginSession.idTokenHint = idTokenHint ?: ""
 
         callback.onSuccess(loginSession)
     }
@@ -394,21 +398,18 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
             return Completable.complete()
         }
 
-        var idToken = result.id_token
-        if (!idToken.isNullOrBlank()) {
-            // update the loginSession object
-            loginSession.idTokenInternal = idToken
-        } else {
-            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.missingIdToken, utility.readResourceString(ERROR_MISSING_ID_TOKEN), null))
-            return Completable.complete()
-        }
-
         var expiresIn = result.expires_in
         if (!expiresIn.isNullOrBlank()) {
             loginSession.accessTokenExpiresAtInternal = utility.addSecondsToCurrentDate(expiresIn)
         } else {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.missingAccessTokenExpiry, utility.readResourceString(ERROR_MISSING_ACCESS_TOKEN_EXPIRY), null))
             return Completable.complete()
+        }
+
+        // no error for missing id_token, id_token will only be part of the /token API response if 'openid' is part of the scope
+        if (result.id_token != null) {
+            // update the loginSession object
+            loginSession.idTokenInternal = result.id_token
         }
 
         // no error for missing refresh_token as this is currently optional
