@@ -7,6 +7,7 @@ import com.grab.partner.sdk.models.LoginSession
 interface GrabSdkManager {
     fun init(context: Context)
     fun doLogin(context: Context, clientId: String)
+    fun teardown()
 
     class Builder {
 

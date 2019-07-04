@@ -84,4 +84,7 @@ class GrabSdkManagerImpl private constructor(): GrabSdkManager {
 
     }
 
+    override fun teardown() {
+        grabIdPartner.teardown()
+    }
 }
