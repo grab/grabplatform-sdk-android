@@ -56,6 +56,9 @@
             android:name="com.grab.partner.sdk.LoginHint"
             android:value="[optional parameter: if presence this will add query string parameter 'login_hint=&lt;login hint string&gt;' in the /authorize api call]" />
         <meta-data
+            android:name="com.grab.partner.sdk.IDTokenHint"
+            android:value="[optional parameter: if presence this will add query string parameter 'id_token_hint=&lt;id_token_hint string&gt;' in the /authorize api call]" />
+        <meta-data
             android:name="com.grab.partner.sdk.ServiceDiscoveryUrl"
             android:value="[obtain from GrabId team]" />
         <meta-data

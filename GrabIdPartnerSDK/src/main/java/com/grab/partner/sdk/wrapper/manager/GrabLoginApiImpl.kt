@@ -11,7 +11,7 @@ class GrabLoginApiImpl (private val grabIdPartner: GrabIdPartnerProtocol) : Grab
     override fun doLogin(context: Context, state: String, builder: GrabSdkManager.Builder) {
 
         grabIdPartner.loadLoginSession(state, builder.clientId, builder.redirectURI, builder.serviceDiscoveryUrl,
-                builder.scope, builder.acrValues, builder.request, builder.loginHint,
+                builder.scope, builder.acrValues, builder.request, builder.loginHint, builder.idTokenHint,
                 object : LoginSessionCallback {
 
                     override fun onSuccess(loginSession: LoginSession) {
