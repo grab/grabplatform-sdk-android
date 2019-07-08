@@ -1,17 +1,21 @@
-package com.grab.partner.sdk.wrapper.manager
+package com.grab.partner.sdk.wrapper.mock
 
 import android.content.Context
-import com.grab.partner.sdk.CONST_READ_RESOURCE_STRING
 import com.grab.partner.sdk.models.GrabIdPartnerError
 import com.grab.partner.sdk.models.GrabIdPartnerErrorCode
 import com.grab.partner.sdk.models.GrabIdPartnerErrorDomain
 import com.grab.partner.sdk.models.LoginSession
-import com.nhaarman.mockitokotlin2.mock
+import com.grab.partner.sdk.wrapper.manager.EMPTY_STRING_CONST
+import com.grab.partner.sdk.wrapper.manager.GrabSdkManager
+import com.grab.partner.sdk.wrapper.manager.SessionCallbacks
+
+internal const val CONST_READ_RESOURCE_STRING = "stub_message"
 
 class MockGrabSdkManager: GrabSdkManager {
 
     private var isSuccess: Boolean = false
     private var builder: Builder? = null
+    private var loginSession: LoginSession = LoginSession()
 
     fun setResponseType(success: Boolean, builder: Builder){
         isSuccess = success
@@ -23,7 +27,7 @@ class MockGrabSdkManager: GrabSdkManager {
 
     override fun doLogin(context: Context, clientId: String) {
         if(isSuccess)
-            builder?.listener?.onSuccess(mock())
+            builder?.listener?.onSuccess(loginSession)
         else
             builder?.listener?.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.sdkNotInitialized, CONST_READ_RESOURCE_STRING, null))
     }
@@ -98,5 +102,8 @@ class MockGrabSdkManager: GrabSdkManager {
 
             return manager
         }
+    }
+
+    override fun teardown() {
     }
 }
