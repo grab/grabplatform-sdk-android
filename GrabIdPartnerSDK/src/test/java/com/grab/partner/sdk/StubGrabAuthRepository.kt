@@ -9,16 +9,14 @@
 package com.grab.partner.sdk
 
 import com.grab.partner.sdk.api.GrabAuthRepository
-import com.grab.partner.sdk.models.DiscoveryResponse
-import com.grab.partner.sdk.models.IdTokenInfo
-import com.grab.partner.sdk.models.TokenAPIResponse
-import com.grab.partner.sdk.models.TokenRequest
+import com.grab.partner.sdk.models.*
 import io.reactivex.Observable
 
 internal class StubGrabAuthRepository : GrabAuthRepository {
     private lateinit var discoveryResponse: Observable<DiscoveryResponse>
     private lateinit var tokenAPIResponse: Observable<TokenAPIResponse>
     private lateinit var idTokenInfo: Observable<IdTokenInfo>
+    private lateinit var clientPublicInfo: Observable<ClientPublicInfo>
 
     override fun callDiscovery(discoveryEndpoint: String): Observable<DiscoveryResponse> {
         return discoveryResponse
@@ -26,6 +24,14 @@ internal class StubGrabAuthRepository : GrabAuthRepository {
 
     fun setCallDiscovery(discoveryResponse: Observable<DiscoveryResponse>) {
         this.discoveryResponse = discoveryResponse
+    }
+
+    override fun fetchClientPublicInfo(clientPublicEndpoint: String): Observable<ClientPublicInfo> {
+        return clientPublicInfo
+    }
+
+    fun setFetchClientPublicInfo(clientPublicInfo: Observable<ClientPublicInfo>) {
+        this.clientPublicInfo = clientPublicInfo
     }
 
     override fun getToken(tokenEndpoint: String, tokenRequest: TokenRequest): Observable<TokenAPIResponse> {

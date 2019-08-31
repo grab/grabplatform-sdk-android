@@ -18,7 +18,6 @@ import com.grab.partner.sdk.R.string.ERROR_MISSING_AUTHORIZE_ENDPOINT_IN_DISCOVE
 import com.grab.partner.sdk.R.string.ERROR_MISSING_CLIENT_ID
 import com.grab.partner.sdk.R.string.ERROR_MISSING_CODE
 import com.grab.partner.sdk.R.string.ERROR_MISSING_DISCOVERY_ENDPOINT
-import com.grab.partner.sdk.R.string.ERROR_MISSING_ID_TOKEN
 import com.grab.partner.sdk.R.string.ERROR_MISSING_ID_TOKEN_VERIFICATION_ENDPOINT_IN_LOGINSESSION
 import com.grab.partner.sdk.R.string.ERROR_MISSING_PARTNER_SCOPE
 import com.grab.partner.sdk.R.string.ERROR_MISSING_REDIRECT_URI
@@ -36,21 +35,17 @@ import com.grab.partner.sdk.keystore.AndroidKeyStoreWrapper
 import com.grab.partner.sdk.keystore.CipherWrapper
 import com.grab.partner.sdk.keystore.IAndroidKeyStoreWrapper
 import com.grab.partner.sdk.keystore.ICipher
-import com.grab.partner.sdk.models.GrabIdPartnerError
-import com.grab.partner.sdk.models.GrabIdPartnerErrorCode
-import com.grab.partner.sdk.models.GrabIdPartnerErrorDomain
-import com.grab.partner.sdk.models.IdTokenInfo
-import com.grab.partner.sdk.models.LoginSession
-import com.grab.partner.sdk.models.TokenAPIResponse
-import com.grab.partner.sdk.models.TokenRequest
+import com.grab.partner.sdk.models.*
 import com.grab.partner.sdk.scheduleprovider.SchedulerProvider
-import com.grab.partner.sdk.utils.IChromeCustomTab
+import com.grab.partner.sdk.utils.LaunchAppForAuthorization
 import com.grab.partner.sdk.utils.IUtility
 import com.grab.partner.sdk.utils.LogUtils
 import com.grab.partner.sdk.utils.ObjectType
 import io.reactivex.Completable
 import io.reactivex.Maybe
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.functions.BiFunction
+import io.reactivex.rxkotlin.subscribeBy
 import retrofit2.HttpException
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -61,15 +56,17 @@ internal const val PARTNER_REDIRECT_URI_ATTRIBUTE = "com.grab.partner.sdk.Redire
 internal const val PARTNER_ACR_VALUES_ATTRIBUTE = "com.grab.partner.sdk.AcrValues"
 internal const val PARTNER_REQUEST_VALUES_ATTRIBUTE = "com.grab.partner.sdk.Request"
 internal const val PARTNER_LOGINHINT_VALUES_ATTRIBUTE = "com.grab.partner.sdk.LoginHint"
+internal const val PARTNER_PROMPT_VALUE_ATTRIBUTE = "com.grab.partner.sdk.Prompt"
 internal const val PARTNER_IDTOKENHINT_VALUES_ATTRIBUTE = "com.grab.partner.sdk.IDTokenHint"
 internal const val PARTNER_SCOPE_ATTRIBUTE = "com.grab.partner.sdk.Scope"
 internal const val PARTNER_SERVICE_DISCOVERY_URL = "com.grab.partner.sdk.ServiceDiscoveryUrl"
 internal const val GRANT_TYPE = "authorization_code"
 internal const val UNKNOWN_HTTP_EXCEPTION = "error: unknown http exception"
+internal const val CLIENT_PUBLIC_INFO_URL = "https://api.stg-myteksi.com/grabid/v1/oauth2/clients/%s/public"
 
 class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
-    @set:Inject
-    internal var chromeCustomTab: IChromeCustomTab? = null
+    @Inject
+    internal lateinit var launchAppForAuthorization: LaunchAppForAuthorization
     @Inject
     internal lateinit var grabAuthRepository: GrabAuthRepository
     @Inject
@@ -83,7 +80,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
     internal var androidKeyStoreWrapper: IAndroidKeyStoreWrapper? = null
     @set:Inject
     internal var cipherWrapper: ICipher? = null
-    internal var compositeDisposable: CompositeDisposable? = null
+    internal lateinit var compositeDisposable: CompositeDisposable
 
     private object Holder {
         val INSTANCE = GrabIdPartner()
@@ -103,26 +100,23 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         if (isSdkInitialized) {
             return
         }
-
-        if (context.applicationContext == null) {
-            return
-        }
         // Get the global application context of the current app.
         applicationContext = context.applicationContext
         // create Android keystore and Cipher classes
-        androidKeyStoreWrapper = AndroidKeyStoreWrapper(context.applicationContext)
+        applicationContext?.let {
+            androidKeyStoreWrapper = AndroidKeyStoreWrapper(it)
+        } ?: return
 
         cipherWrapper = CipherWrapper()
-
         // Dependency injection
-        var component = DaggerMainComponent
+        val component = DaggerMainComponent
                 .builder()
                 .appModule(AppModule(context))
                 .build()
 
         component.inject(this)
         compositeDisposable = CompositeDisposable()
-        chromeCustomTab?.speedUpChromeTabs() ?: return teardown()
+        launchAppForAuthorization.speedUpChromeTabs()
         isSdkInitialized = true
     }
 
@@ -135,14 +129,14 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.sdkNotInitialized, utility.readResourceString(ERROR_SDK_IS_NOT_INITIALIZED), null))
             return
         }
-        var loginSession = LoginSession()
+        val loginSession = LoginSession()
         loginSession.codeVerifierInternal = utility.generateCodeVerifier()
         loginSession.stateInternal = utility.getRandomString()
         loginSession.nonceInternal = utility.getRandomString()
         loginSession.codeChallenge = utility.generateCodeChallenge(loginSession.codeVerifier)
 
         // retrieve all the partner info from Android manifest and validate we have value for clientId, redirectUri and scope
-        var clientId = utility.getPartnerInfo(applicationContext, PARTNER_CLIENT_ID_ATTRIBUTE)
+        val clientId = utility.getPartnerInfo(applicationContext, PARTNER_CLIENT_ID_ATTRIBUTE)
         if (clientId == null || clientId.isEmpty()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidClientId, utility.readResourceString(ERROR_MISSING_CLIENT_ID), null))
             return
@@ -150,7 +144,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
             loginSession.clientId = clientId
         }
 
-        var redirectUri = utility.getPartnerInfo(applicationContext, PARTNER_REDIRECT_URI_ATTRIBUTE)
+        val redirectUri = utility.getPartnerInfo(applicationContext, PARTNER_REDIRECT_URI_ATTRIBUTE)
         if (redirectUri == null || redirectUri.isEmpty()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidRedirectURI, utility.readResourceString(ERROR_MISSING_REDIRECT_URI), null))
             return
@@ -158,7 +152,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
             loginSession.redirectUri = redirectUri
         }
 
-        var serviceDiscoveryUrl = utility.getPartnerInfo(applicationContext, PARTNER_SERVICE_DISCOVERY_URL)
+        val serviceDiscoveryUrl = utility.getPartnerInfo(applicationContext, PARTNER_SERVICE_DISCOVERY_URL)
         if (serviceDiscoveryUrl == null || serviceDiscoveryUrl.isEmpty()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, utility.readResourceString(ERROR_MISSING_DISCOVERY_ENDPOINT), null))
             return
@@ -166,7 +160,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
             loginSession.serviceDiscoveryUrl = serviceDiscoveryUrl
         }
 
-        var scope = utility.getPartnerInfo(applicationContext, PARTNER_SCOPE_ATTRIBUTE)
+        val scope = utility.getPartnerInfo(applicationContext, PARTNER_SCOPE_ATTRIBUTE)
         if (scope == null || scope.isEmpty()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidPartnerScope, utility.readResourceString(ERROR_MISSING_PARTNER_SCOPE), null))
             return
@@ -179,46 +173,47 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         loginSession.loginHint = utility.getPartnerInfo(applicationContext, PARTNER_LOGINHINT_VALUES_ATTRIBUTE) ?: ""
         loginSession.idTokenHint = utility.getPartnerInfo(applicationContext, PARTNER_IDTOKENHINT_VALUES_ATTRIBUTE)
                 ?: ""
+        loginSession.prompt = utility.getPartnerInfo(applicationContext, PARTNER_PROMPT_VALUE_ATTRIBUTE) ?: ""
 
         callback.onSuccess(loginSession)
     }
 
     override fun loadLoginSession(state: String, clientId: String, redirectUri: String, serviceDiscoveryUrl: String,
                                   scope: String, acrValues: String?, request: String?, loginHint: String?, idTokenHint: String?, callback:
-                                  LoginSessionCallback) {
+                                  LoginSessionCallback, prompt: String?) {
         // verify SDK has been initialized
         if (!isSdkInitialized) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.sdkNotInitialized, utility.readResourceString(ERROR_SDK_IS_NOT_INITIALIZED), null))
             return
         }
-        var loginSession = LoginSession()
+        val loginSession = LoginSession()
         loginSession.codeVerifierInternal = utility.generateCodeVerifier()
         loginSession.stateInternal = state
         loginSession.nonceInternal = utility.getRandomString()
         loginSession.codeChallenge = utility.generateCodeChallenge(loginSession.codeVerifier)
 
-        if (clientId == null || clientId.isEmpty()) {
+        if (clientId.isEmpty()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidClientId, utility.readResourceString(ERROR_MISSING_CLIENT_ID), null))
             return
         } else {
             loginSession.clientId = clientId
         }
 
-        if (redirectUri == null || redirectUri.isEmpty()) {
+        if (redirectUri.isEmpty()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidRedirectURI, utility.readResourceString(ERROR_MISSING_REDIRECT_URI), null))
             return
         } else {
             loginSession.redirectUri = redirectUri
         }
 
-        if (serviceDiscoveryUrl == null || serviceDiscoveryUrl.isEmpty()) {
+        if (serviceDiscoveryUrl.isEmpty()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, utility.readResourceString(ERROR_MISSING_DISCOVERY_ENDPOINT), null))
             return
         } else {
             loginSession.serviceDiscoveryUrl = serviceDiscoveryUrl
         }
 
-        if (scope == null || scope.isEmpty()) {
+        if (scope.isEmpty()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidPartnerScope, utility.readResourceString(ERROR_MISSING_PARTNER_SCOPE), null))
             return
         } else {
@@ -229,6 +224,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         loginSession.request = request ?: ""
         loginSession.loginHint = loginHint ?: ""
         loginSession.idTokenHint = idTokenHint ?: ""
+        loginSession.prompt = prompt ?: ""
 
         callback.onSuccess(loginSession)
     }
@@ -238,25 +234,25 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
      */
     override fun login(loginSession: LoginSession, context: Context, callback: LoginCallback) {
         // validate if loginSession has all the required parameters
-        if (loginSession.clientId.isNullOrBlank()) {
+        if (loginSession.clientId.isBlank()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidClientId, utility.readResourceString(ERROR_MISSING_CLIENT_ID), null))
             return
         }
-        if (loginSession.redirectUri.isNullOrBlank()) {
+        if (loginSession.redirectUri.isBlank()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidRedirectURI, utility.readResourceString(ERROR_MISSING_REDIRECT_URI), null))
             return
         }
-        if (loginSession.scope.isNullOrBlank()) {
+        if (loginSession.scope.isBlank()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidPartnerScope, utility.readResourceString(ERROR_MISSING_PARTNER_SCOPE), null))
             return
         }
-        if (loginSession.serviceDiscoveryUrl.isNullOrBlank()) {
+        if (loginSession.serviceDiscoveryUrl.isBlank()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, utility.readResourceString(ERROR_MISSING_DISCOVERY_ENDPOINT), null))
             return
         }
 
         // check if user has previous valid access token in shared preference
-        compositeDisposable?.add(
+        compositeDisposable.add(
                 retrieveLoginSessionFromCache(loginSession)
                         .subscribeOn(schedulerProvider.io())
                         .observeOn(schedulerProvider.ui())
@@ -288,25 +284,25 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
      */
     override fun login(loginSession: LoginSession, context: Context, callback: LoginCallbackV2) {
         // validate if loginSession has all the required parameters
-        if (loginSession.clientId.isNullOrBlank()) {
+        if (loginSession.clientId.isBlank()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidClientId, utility.readResourceString(ERROR_MISSING_CLIENT_ID), null))
             return
         }
-        if (loginSession.redirectUri.isNullOrBlank()) {
+        if (loginSession.redirectUri.isBlank()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidRedirectURI, utility.readResourceString(ERROR_MISSING_REDIRECT_URI), null))
             return
         }
-        if (loginSession.scope.isNullOrBlank()) {
+        if (loginSession.scope.isBlank()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidPartnerScope, utility.readResourceString(ERROR_MISSING_PARTNER_SCOPE), null))
             return
         }
-        if (loginSession.serviceDiscoveryUrl.isNullOrBlank()) {
+        if (loginSession.serviceDiscoveryUrl.isBlank()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, utility.readResourceString(ERROR_MISSING_DISCOVERY_ENDPOINT), null))
             return
         }
 
         // check if user has previous valid access token in shared preference
-        compositeDisposable?.add(
+        compositeDisposable.add(
                 retrieveLoginSessionFromCache(loginSession)
                         .subscribeOn(schedulerProvider.io())
                         .observeOn(schedulerProvider.ui())
@@ -343,8 +339,8 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         }
 
         // obtain the code and state from the redirect uri
-        var code = utility.getURLParam(RESPONSE_TYPE, redirectUrl)
-        var state = utility.getURLParam(RESPONSE_STATE, redirectUrl)
+        val code = utility.getURLParam(RESPONSE_TYPE, redirectUrl)
+        val state = utility.getURLParam(RESPONSE_STATE, redirectUrl)
 
         // validate code is not null or empty string
         if (code == null || code.isEmpty()) {
@@ -359,7 +355,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         }
 
         // check if we have valid token endpoint inside loginSession otherwise throw error
-        var tokenEndPoint = loginSession.tokenEndpoint
+        val tokenEndPoint = loginSession.tokenEndpoint
         if (tokenEndPoint == null || tokenEndPoint.isEmpty()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.errorInLoginSessionObject, utility.readResourceString(ERROR_MISSING_TOKEN_ENDPOINT_IN_LOGINSESSION), null))
             return
@@ -369,7 +365,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         loginSession.codeInternal = code
         loginSession.stateInternal = state
 
-        compositeDisposable?.add(grabAuthRepository.getToken(tokenEndPoint, TokenRequest(code, loginSession.clientId, GRANT_TYPE, loginSession.redirectUri, loginSession.codeVerifier))
+        compositeDisposable.add(grabAuthRepository.getToken(tokenEndPoint, TokenRequest(code, loginSession.clientId, GRANT_TYPE, loginSession.redirectUri, loginSession.codeVerifier))
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .flatMapCompletable {
@@ -389,7 +385,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
 
     private fun processLoginSessionResponse(loginSession: LoginSession, result: TokenAPIResponse, callback: ExchangeTokenCallback): Completable {
         // validate that response from the exchange token endpoint has required parameters
-        var accessToken = result.access_token
+        val accessToken = result.access_token
         if (!accessToken.isNullOrBlank()) {
             // update the loginSession object
             loginSession.accessTokenInternal = accessToken
@@ -398,7 +394,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
             return Completable.complete()
         }
 
-        var expiresIn = result.expires_in
+        val expiresIn = result.expires_in
         if (!expiresIn.isNullOrBlank()) {
             loginSession.accessTokenExpiresAtInternal = utility.addSecondsToCurrentDate(expiresIn)
         } else {
@@ -423,8 +419,8 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         }
 
         // serialize loginSession object
-        var gson = Gson()
-        var serializedLoginSession = gson.toJson(loginSession)
+        val gson = Gson()
+        val serializedLoginSession = gson.toJson(loginSession)
 
         // encrypt entire loginSession object
         var encryptedString: String? = null
@@ -452,14 +448,14 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
      * Validate received token is valid using token info endpoint
      */
     override fun getIdTokenInfo(loginSession: LoginSession, callback: GetIdTokenInfoCallback) {
-        var idTokenVerificationEndpoint = loginSession.idTokenVerificationEndpoint
+        val idTokenVerificationEndpoint = loginSession.idTokenVerificationEndpoint
         if (idTokenVerificationEndpoint.isNullOrBlank()) {
             callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.GETIDTOKENINFO, GrabIdPartnerErrorCode.errorInLoginSessionObject, utility.readResourceString(ERROR_MISSING_ID_TOKEN_VERIFICATION_ENDPOINT_IN_LOGINSESSION), null))
             return
         }
 
         // check if user has valid idTokenInfo in the shared preference
-        compositeDisposable?.add(
+        compositeDisposable.add(
                 retrieveIdTokenInfoFromCache(loginSession)
                         .subscribeOn(schedulerProvider.io())
                         .observeOn(schedulerProvider.ui())
@@ -473,7 +469,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                             return@subscribe
                         }, {
                             // no cache available
-                            compositeDisposable?.add(grabAuthRepository.getIdTokenInfo(idTokenVerificationEndpoint, loginSession.clientId, loginSession.idToken, loginSession.nonce)
+                            compositeDisposable.add(grabAuthRepository.getIdTokenInfo(idTokenVerificationEndpoint, loginSession.clientId, loginSession.idToken, loginSession.nonce)
                                     .subscribeOn(schedulerProvider.io())
                                     .observeOn(schedulerProvider.ui())
                                     .flatMapCompletable { processIdTokenInfoApiResponse(idTokenInfo = it, loginSession = loginSession, callback = callback) }
@@ -498,8 +494,8 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         }
 
         // serialize idTokenInfo object
-        var gson = Gson()
-        var serializedIdTokenInfo = gson.toJson(idTokenInfo)
+        val gson = Gson()
+        val serializedIdTokenInfo = gson.toJson(idTokenInfo)
 
         // encrypt entire idTokenInfo object, Here we intentionally skipping the error callback if any exception occur. For any exception we still wants to send the token info to user and will skip the caching part.
         var encryptedString: String? = null
@@ -535,18 +531,20 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         }
     }
 
+    /**
+     * Unsubscribe all observable subscription and clearing other objects
+     */
     override fun teardown() {
         try {
             applicationContext = null
             androidKeyStoreWrapper = null
             cipherWrapper = null
-            chromeCustomTab = null
             isSdkInitialized = false
             // dispose all observable subscription
-            compositeDisposable?.clear()
+            compositeDisposable.clear()
         } catch (exception: Exception) {
-            if (compositeDisposable?.isDisposed == false) {
-                compositeDisposable = null
+            if (!compositeDisposable.isDisposed) {
+                compositeDisposable.clear()
             }
             LogUtils.debug("teardown", exception.toString())
         }
@@ -556,7 +554,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
      * Validate if access token is still valid
      */
     override fun isValidAccessToken(loginSession: LoginSession): Boolean {
-        var accessTokenExpireAt = loginSession.accessTokenExpiresAt
+        val accessTokenExpireAt = loginSession.accessTokenExpiresAt
         if (accessTokenExpireAt == null || accessTokenExpireAt < utility.getCurrentTimeInUTC()) {
             return false
         }
@@ -570,9 +568,9 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         if (idTokenInfo.nonce.isNullOrBlank())
             return false
 
-        var idTokenExpireAt = idTokenInfo.expiration
-        var idTokenNotValidBefore = idTokenInfo.notValidBefore
-        var currentTimeInUTC = utility.getCurrentTimeInUTC()
+        val idTokenExpireAt = idTokenInfo.expiration
+        val idTokenNotValidBefore = idTokenInfo.notValidBefore
+        val currentTimeInUTC = utility.getCurrentTimeInUTC()
 
         if (idTokenExpireAt == null || idTokenNotValidBefore == null || idTokenExpireAt < currentTimeInUTC || idTokenNotValidBefore > currentTimeInUTC) {
             return false
@@ -585,8 +583,9 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
      * Call the discovery endpoint to get the URLs
      */
     private fun callDiscovery(context: Context, loginSession: LoginSession, callback: LoginCallback) {
-        compositeDisposable?.add(grabAuthRepository.callDiscovery(loginSession.serviceDiscoveryUrl)
-                .subscribeOn(schedulerProvider.io())
+        val clientPublicEndpoint = String.format(CLIENT_PUBLIC_INFO_URL, loginSession.clientId)
+        compositeDisposable.add(grabAuthRepository.callDiscovery(loginSession.serviceDiscoveryUrl).firstOrError().subscribeOn(schedulerProvider.io())
+                .zipWith(grabAuthRepository.fetchClientPublicInfo(clientPublicEndpoint).firstOrError().subscribeOn(schedulerProvider.io()), BiFunction { discoveryResponse: DiscoveryResponse, clientPublicInfoResponse: ClientPublicInfo -> Pair(discoveryResponse, clientPublicInfoResponse) })
                 .observeOn(schedulerProvider.ui())
                 .subscribe({ result ->
                     // validate that response from the discovery endpoint has required parameters
@@ -594,27 +593,53 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                         callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, utility.readResourceString(ERROR_NULL_DISCOVERY_ENDPOINT_RESPONSE), null))
                         return@subscribe
                     }
-                    if (!result.authorization_endpoint.isNullOrBlank()) {
-                        loginSession.authorizationEndpoint = result.authorization_endpoint
+                    val discoveryResponse = result.first
+                    val clientPublicInfo = result.second
+
+                    if (!discoveryResponse.authorization_endpoint.isNullOrBlank()) {
+                        loginSession.authorizationEndpoint = discoveryResponse.authorization_endpoint
                     } else {
                         callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, utility.readResourceString(ERROR_MISSING_AUTHORIZE_ENDPOINT_IN_DISCOVERY_ENDPOINT), null))
                         return@subscribe
                     }
 
-                    if (!result.token_endpoint.isNullOrBlank()) {
-                        loginSession.tokenEndpoint = result.token_endpoint
+                    if (!discoveryResponse.token_endpoint.isNullOrBlank()) {
+                        loginSession.tokenEndpoint = discoveryResponse.token_endpoint
                     } else {
                         callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, utility.readResourceString(ERROR_MISSING_TOKEN_ENDPOINT_IN_DISCOVERY_ENDPOINT), null))
                         return@subscribe
                     }
 
-                    if (!result.id_token_verification_endpoint.isNullOrBlank()) {
-                        loginSession.idTokenVerificationEndpoint = result.id_token_verification_endpoint
+                    if (!discoveryResponse.id_token_verification_endpoint.isNullOrBlank()) {
+                        loginSession.idTokenVerificationEndpoint = discoveryResponse.id_token_verification_endpoint
                     } else {
                         callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, utility.readResourceString(ERROR_MISSING_VERIFY_TOKEN_ENDPOINT_IN_DISCOVERY_ENDPOINT), null))
                         return@subscribe
                     }
-                    chromeCustomTab?.openChromeCustomTab(context, loginSession, callback)
+                    // if loginSession object contains login_hint or id_token_hint we want to open the Chrome Custom Tab to complete the OAuth flow
+                    if (loginSession.loginHint?.isNotBlank() == true || loginSession.idTokenHint?.isNotBlank() == true || loginSession.prompt?.isNotBlank() == true) {
+                        launchAppForAuthorization.launchOAuthFlow(context, loginSession, callback)
+                    } else {
+                        // check if we have native app installed otherwise launch the OAuth flow using Chrome Custom Tab
+                        utility.isPackageInstalled(clientPublicInfo.custom_protocols, context.packageManager)
+                                .subscribeOn(schedulerProvider.io())
+                                .observeOn(schedulerProvider.ui())
+                                .subscribeBy(onSuccess = { protocolInfo ->
+                                    // if we find the package then launch the native app otherwise open the Chrome Custom Tab
+                                    if (protocolInfo != null) {
+                                        loginSession.deeplinkUriInternal = protocolInfo.protocol_adr
+                                        launchAppForAuthorization.launchOAuthFlow(context, loginSession, callback, true)
+                                    }
+                                }, onError = {
+                                    // if we face any error then launch Chrome browser flow
+                                    launchAppForAuthorization.launchOAuthFlow(context, loginSession, callback)
+                                    LogUtils.debug("callDiscovery", it.localizedMessage)
+                                }, onComplete = {
+                                    // if we're here means we haven't find the required native app so will launch the Chrome browser flow
+                                    launchAppForAuthorization.launchOAuthFlow(context, loginSession, callback)
+                                })
+                    }
+
                 }, { error ->
                     var errorJsonString = ""
                     if (error is HttpException) {
@@ -631,12 +656,12 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
      */
     private fun retrieveLoginSessionFromCache(loginSession: LoginSession): Maybe<LoginSession> {
         // check if we have valid token for this clientId and scope
-        var encryptionData = utility.retrieveObjectFromSharedPref(loginSession, sharedPreferences, ObjectType.LOGIN_SESSION)
+        val encryptionData = utility.retrieveObjectFromSharedPref(loginSession, sharedPreferences, ObjectType.LOGIN_SESSION)
         if (encryptionData != null) {
             // decrypt the loginSessionEncrypted data
-            var loginSessionDecryptedString: String?
+            val loginSessionDecryptedString: String?
             try {
-                var keyPair = androidKeyStoreWrapper?.getAndroidKeyStoreAsymmetricKeyPair(utility.generateKeystoreAlias(loginSession, ObjectType.LOGIN_SESSION))
+                val keyPair = androidKeyStoreWrapper?.getAndroidKeyStoreAsymmetricKeyPair(utility.generateKeystoreAlias(loginSession, ObjectType.LOGIN_SESSION))
                 if (keyPair == null) {
                     deleteEntriesFromSharedPreferenceAndKeystore(loginSession, sharedPreferences)
                     return Maybe.empty()
@@ -655,7 +680,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
             }
 
             // deserialize to LoginSession object
-            var loginSessionFromCache = loginSessionDecryptedString.let { utility.serializeToLoginSession(it.toString()) }
+            val loginSessionFromCache = loginSessionDecryptedString.let { utility.deSerializeToLoginSession(it.toString()) }
 
             if (loginSessionFromCache != null) {
                 // check whether the accessToken still valid if not then clear all entries from shared preference and Android keystore
@@ -685,12 +710,12 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
      */
     private fun retrieveIdTokenInfoFromCache(loginSession: LoginSession): Maybe<IdTokenInfo> {
         // check if we have valid IdTokenInfo for this clientId and scope
-        var encryptionData = utility.retrieveObjectFromSharedPref(loginSession, sharedPreferences, ObjectType.ID_TOKEN_INFO)
+        val encryptionData = utility.retrieveObjectFromSharedPref(loginSession, sharedPreferences, ObjectType.ID_TOKEN_INFO)
         if (encryptionData != null) {
             // decrypt the idTokenInfoEncryptedData data
-            var idTokenInfoDecryptedString: String?
+            val idTokenInfoDecryptedString: String?
             try {
-                var keyPair = androidKeyStoreWrapper?.getAndroidKeyStoreAsymmetricKeyPair(utility.generateKeystoreAlias(loginSession, ObjectType.ID_TOKEN_INFO))
+                val keyPair = androidKeyStoreWrapper?.getAndroidKeyStoreAsymmetricKeyPair(utility.generateKeystoreAlias(loginSession, ObjectType.ID_TOKEN_INFO))
                 if (keyPair == null) {
                     deleteEntriesFromSharedPreferenceAndKeystore(loginSession, sharedPreferences)
                     return Maybe.empty()
@@ -710,7 +735,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
             }
 
             // deserialize to LoginSession object
-            var idTokenInfo = idTokenInfoDecryptedString.let { utility.serializeToIdTokenInfo(it.toString()) }
+            val idTokenInfo = idTokenInfoDecryptedString.let { utility.deSerializeToIdTokenInfo(it.toString()) }
 
             if (idTokenInfo != null) {
                 // check whether the idToken still valid if not then clear all entries from shared preference and Android keystore

@@ -26,6 +26,7 @@ class LoginSession {
     // The OpenID Connect ACR optional parameter to the authorize endpoint will be utilized to pass in
     // service id info and device ID
     var acrValues: String? = EMPTY_STRING_CONST
+    var prompt: String? = EMPTY_STRING_CONST
 
     /****************************************************************
     // parameters to be set by GrabId Partner SDK
@@ -57,6 +58,9 @@ class LoginSession {
 
     internal var refreshTokenInternal: String = EMPTY_STRING_CONST
     val refreshToken get() = refreshTokenInternal
+
+    internal var deeplinkUriInternal: String = EMPTY_STRING_CONST
+    val deeplinkUri get() = deeplinkUriInternal
 
     /****************************************************************
     // internal to GrabId Partner SDK

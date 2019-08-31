@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) Grab Taxi Holdings PTE LTD (GRAB)
+  ~
+  ~ This source code is licensed under the MIT license found in the
+  ~ LICENSE file in the root directory of this source tree.
+  ~
+  -->
+
+<rotate xmlns:android="http://schemas.android.com/apk/res/android"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:fromDegrees="0"
+        android:toDegrees="360">
+
+    <shape
+            android:shape="ring"
+            android:innerRadiusRatio="3"
+            android:thicknessRatio="8"
+            android:useLevel="false">
+
+        <size
+                android:width="76dip"
+                android:height="76dip"/>
+
+        <gradient
+                android:type="sweep"
+                android:useLevel="false"
+                android:startColor="#00B140"
+                android:endColor="#00ffffff"
+                android:angle="0"/>
+    </shape>
+</rotate>

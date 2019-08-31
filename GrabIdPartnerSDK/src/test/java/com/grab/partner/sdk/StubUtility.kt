@@ -10,11 +10,15 @@ package com.grab.partner.sdk
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import com.grab.partner.sdk.models.IdTokenInfo
 import com.grab.partner.sdk.models.LoginSession
+import com.grab.partner.sdk.models.ProtocolInfo
 import com.grab.partner.sdk.utils.IUtility
 import com.grab.partner.sdk.utils.ObjectType
 import com.grab.partner.sdk.utils.UTC_TIMEZONE
+import io.reactivex.Maybe
+import io.reactivex.Single
 import java.util.Calendar
 import java.util.Date
 import java.util.TimeZone
@@ -30,6 +34,7 @@ class StubUtility : IUtility {
     private var partnerInfoMap: Map<String, String?>? = null
     private var objectFromSharedPreferences: String? = null
     private var idTokenInfo: IdTokenInfo? = null
+    private var protocolInfo: ProtocolInfo? = null
 
     override fun getPartnerInfo(context: Context?, attribute: String): String? {
         return partnerInfoMap?.get(attribute)
@@ -111,11 +116,11 @@ class StubUtility : IUtility {
         this.objectFromSharedPreferences = value
     }
 
-    override fun serializeToLoginSession(loginSessionString: String): LoginSession? {
+    override fun deSerializeToLoginSession(loginSessionString: String): LoginSession? {
         return null
     }
 
-    override fun serializeToIdTokenInfo(idTokenInfoString: String): IdTokenInfo? {
+    override fun deSerializeToIdTokenInfo(idTokenInfoString: String): IdTokenInfo? {
         return this.idTokenInfo
     }
 
@@ -130,5 +135,16 @@ class StubUtility : IUtility {
     }
 
     override fun clearLoginSession(loginSession: LoginSession) {
+    }
+
+    override fun isPackageInstalled(protocols: List<String>, packageManager: PackageManager): Maybe<ProtocolInfo> {
+        if (protocolInfo == null)
+            return Maybe.empty()
+
+        return Maybe.just(protocolInfo)
+    }
+
+    fun setIsPackageInstalled(protocolInfo: ProtocolInfo?) {
+        this.protocolInfo = protocolInfo
     }
 }

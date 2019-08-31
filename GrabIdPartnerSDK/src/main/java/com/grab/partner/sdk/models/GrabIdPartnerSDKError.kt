@@ -37,7 +37,8 @@ enum class GrabIdPartnerErrorCode {
     invalidNonce,                   // The nonce is invalid
     invalidResponse,                // Unexpected response from GrabId service
     errorInLogout,                  // Error in logout operation
-    errorInTearDown                 // Error in teardown
+    errorInTearDown,                 // Error in teardown
+    errorLaunchingChromeCustomTab   // Error launching oauth flow using Chrome custom tab
 }
 
 class GrabIdPartnerError(grabIdPartnerErrorDomain: GrabIdPartnerErrorDomain, code: GrabIdPartnerErrorCode, localizeMessage: String?, serviceError: Throwable?) {
@@ -58,6 +59,7 @@ enum class GrabIdPartnerErrorDomain {
     LOADLOGINSESSION,
     LOGIN,
     SERVICEDISCOVERY,
+    LAUNCHOAUTHFLOW,
     EXCHANGETOKEN,
     GETIDTOKENINFO,
     LOGOUT,
