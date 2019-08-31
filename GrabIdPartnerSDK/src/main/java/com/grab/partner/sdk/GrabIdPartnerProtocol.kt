@@ -24,5 +24,5 @@ interface GrabIdPartnerProtocol {
     fun isValidAccessToken(loginSession: LoginSession): Boolean
     fun isValidIdToken(idTokenInfo: IdTokenInfo): Boolean
     fun loadLoginSession(state: String, clientId: String, redirectUri: String, serviceDiscoveryUrl: String,
-                         scope: String, acrValues: String?, request: String?, loginHint: String?, idTokenHint: String?, callback: LoginSessionCallback)
+                         scope: String, acrValues: String?, request: String?, loginHint: String?, idTokenHint: String?, callback: LoginSessionCallback, prompt: String? = "")
 }

@@ -10,18 +10,14 @@ package com.grab.partner.sdk
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.util.Base64
 import android.util.Log
-import com.grab.partner.sdk.models.DiscoveryResponse
-import com.grab.partner.sdk.models.GrabIdPartnerError
-import com.grab.partner.sdk.models.GrabIdPartnerErrorCode
-import com.grab.partner.sdk.models.GrabIdPartnerErrorDomain
-import com.grab.partner.sdk.models.IdTokenInfo
-import com.grab.partner.sdk.models.LoginSession
-import com.grab.partner.sdk.models.TokenAPIResponse
+import com.grab.partner.sdk.models.*
 import com.grab.partner.sdk.scheduleprovider.TestSchedulerProvider
+import com.grab.partner.sdk.utils.LaunchAppForAuthorization
 import com.grab.partner.sdk.utils.Utility
-import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.*
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import org.junit.Assert
@@ -29,6 +25,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito
+import org.mockito.Mockito.mock
 import org.mockito.internal.verification.Times
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
@@ -38,7 +35,7 @@ import java.security.KeyStore
 import java.util.UUID
 
 @RunWith(PowerMockRunner::class)
-@PrepareForTest(Base64::class, LoginSession::class, Utility::class, KeyStore::class, Log::class)
+@PrepareForTest(Base64::class, LoginSession::class, Utility::class, KeyStore::class, Log::class, CompositeDisposable::class)
 class GrabIdPartnerTest {
     private var grabIdPartner = GrabIdPartner.instance as GrabIdPartner
     private var loginSessionCallback = TestLoginSessionCallback()
@@ -48,13 +45,14 @@ class GrabIdPartnerTest {
     private var utility = StubUtility()
     private var context: Context = Mockito.mock(Context::class.java)
     private var sharedPreferences = Mockito.mock(SharedPreferences::class.java)
+    private var packageManager = Mockito.mock(PackageManager::class.java)
     private var grabAuthRepository = StubGrabAuthRepository()
     private var scheduleProvider = TestSchedulerProvider()
-    private var chromeCustomTab = StubChromeCustomTab()
+    private var launchAppForAuthorization = mock<LaunchAppForAuthorization>()
     private var keyPair = PowerMockito.mock(KeyPair::class.java)
     private var androidKeyStoreWrapper = StubAndroidKeyStoreWrapper(keyPair)
     private var cipherWrapper = StubCipherWrapper()
-    private var compositeDisposable = CompositeDisposable()
+    private var compositeDisposable: CompositeDisposable = mock(CompositeDisposable::class.java)
 
     private val FAKE_CLIENT_ID = "fake_client_id"
     private val FAKE_REDIRECT_URI = "fake_redirectUri"
@@ -69,6 +67,8 @@ class GrabIdPartnerTest {
     private val TEST_ID_TOKEN = "id_token"
     private val TEST_NONCE = "nonce"
     private val TEST_EXPIRY_TIME = "100"
+    private val LOGIN_HINT = "login_hint"
+    private val ID_TOKEN_HINT = "id_token_hint"
 
     @Before
     fun setUp() {
@@ -79,7 +79,7 @@ class GrabIdPartnerTest {
         grabIdPartner.grabAuthRepository = grabAuthRepository
         grabIdPartner.schedulerProvider = scheduleProvider
         grabIdPartner.sharedPreferences = sharedPreferences
-        grabIdPartner.chromeCustomTab = chromeCustomTab
+        grabIdPartner.launchAppForAuthorization = launchAppForAuthorization
         grabIdPartner.androidKeyStoreWrapper = androidKeyStoreWrapper
         grabIdPartner.cipherWrapper = cipherWrapper
         grabIdPartner.compositeDisposable = compositeDisposable
@@ -230,7 +230,28 @@ class GrabIdPartnerTest {
     @Test
     fun `verify login with no cache and discovery endpoints`() {
         prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT)
-        testLoginCallback.verifyOnSuccess(1)
+        verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(false))
+    }
+
+    @Test
+    fun `verify login with with login_hint in the loginSession object`() {
+        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT, protocolInfo = ProtocolInfo("", "", ""), loginHint = LOGIN_HINT)
+        verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(false))
+        verify(launchAppForAuthorization, times(0)).launchOAuthFlow(any(), any(), any(), eq(true))
+    }
+
+    @Test
+    fun `verify login with with id_token_hint in the loginSession object`() {
+        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT, protocolInfo = ProtocolInfo("", "", ""), idTokenHint = ID_TOKEN_HINT)
+        verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(false))
+        verify(launchAppForAuthorization, times(0)).launchOAuthFlow(any(), any(), any(), eq(true))
+    }
+
+    @Test
+    fun `verify login when there is a native app available`() {
+        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT, ProtocolInfo("", "", ""))
+        verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(true))
+        verify(launchAppForAuthorization, times(0)).launchOAuthFlow(any(), any(), any(), eq(false))
     }
 
     @Test
@@ -241,6 +262,7 @@ class GrabIdPartnerTest {
         loginSession.serviceDiscoveryUrl = FAKE_DISCOVERY_URL
         utility.setObjectToSharedPref(null)
         grabAuthRepository.setCallDiscovery(Observable.error(Exception()))
+        grabAuthRepository.setFetchClientPublicInfo(Observable.just(ClientPublicInfo(listOf(), "", "", "", "", "")))
 
         grabIdPartner.login(loginSession, context, testLoginCallback)
         var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, "", Exception())
@@ -408,6 +430,18 @@ class GrabIdPartnerTest {
         testGetIdTokenInfoCallback.verifyOnSuccess(idTokenInfo2)
     }
 
+    @Test
+    fun `verify teardown`() {
+        grabIdPartner.teardown()
+        verify(compositeDisposable, times(1)).clear()
+    }
+
+    @Test
+    fun `verify logout`() {
+        grabIdPartner.logout(loginSession, testLoginCallback)
+        testLoginCallback.verifyOnSuccess(1)
+    }
+
     private fun prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(client_id: String?, redirect_uri: String?, discovery_url: String?, partner_scope: String?) {
         GrabIdPartner.isSdkInitialized = true
 
@@ -430,14 +464,19 @@ class GrabIdPartnerTest {
         grabIdPartner.login(loginSession, context, testLoginCallback)
     }
 
-    private fun prerequisiteToValidateCallDiscovery(auth_endpoint: String, token_endpoint: String, id_token_verification_endpoint: String) {
+    private fun prerequisiteToValidateCallDiscovery(auth_endpoint: String, token_endpoint: String, id_token_verification_endpoint: String, protocolInfo: ProtocolInfo? = null, loginHint: String? = null, idTokenHint: String? = null) {
         loginSession.clientId = FAKE_CLIENT_ID
         loginSession.redirectUri = FAKE_REDIRECT_URI
         loginSession.scope = PARTNER_SCOPE
         loginSession.serviceDiscoveryUrl = FAKE_DISCOVERY_URL
+        loginSession.loginHint = loginHint
+        loginSession.idTokenHint = idTokenHint
         utility.setObjectToSharedPref(null)
 
         grabAuthRepository.setCallDiscovery(Observable.just(DiscoveryResponse(auth_endpoint, token_endpoint, id_token_verification_endpoint)))
+        grabAuthRepository.setFetchClientPublicInfo(Observable.just(ClientPublicInfo(listOf(), "", "", "", "", "")))
+        utility.setIsPackageInstalled(protocolInfo)
+        whenever(context.packageManager).thenReturn(packageManager)
         grabIdPartner.login(loginSession, context, testLoginCallback)
     }
 
@@ -475,7 +514,7 @@ class GrabIdPartnerTest {
     }
 }
 
-class TestLoginCallback : LoginCallback, ExchangeTokenCallback {
+class TestLoginCallback : LoginCallback, ExchangeTokenCallback, LogoutCallback {
     private val mockLoginCallback: LoginCallback = Mockito.mock(LoginCallback::class.java)
     private var error: GrabIdPartnerError? = null
 
@@ -520,7 +559,7 @@ class TestLoginSessionCallback : LoginSessionCallback {
         Mockito.verify(mockLoginSessionCallback, Times(i)).onSuccess(any())
     }
 
-    fun verifyAllRequiredParametersExists(){
+    fun verifyAllRequiredParametersExists() {
         Assert.assertTrue(!this.loginSession?.codeVerifier.isNullOrBlank())
         Assert.assertTrue(!this.loginSession?.state.isNullOrBlank())
         Assert.assertTrue(!this.loginSession?.nonce.isNullOrBlank())

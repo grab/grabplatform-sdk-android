@@ -8,16 +8,17 @@
 
 package com.grab.partner.sdk.api
 
-import com.grab.partner.sdk.models.DiscoveryResponse
-import com.grab.partner.sdk.models.IdTokenInfo
-import com.grab.partner.sdk.models.TokenAPIResponse
-import com.grab.partner.sdk.models.TokenRequest
+import com.grab.partner.sdk.models.*
 import io.reactivex.Observable
 import javax.inject.Inject
 
 internal class GrabAuthRepositoryImpl @Inject constructor(private val grabSdkApi: GrabSdkApi) : GrabAuthRepository {
     override fun callDiscovery(discoveryEndpoint: String): Observable<DiscoveryResponse> {
         return grabSdkApi.fetchDiscovery(discoveryEndpoint)
+    }
+
+    override fun fetchClientPublicInfo(clientPublicEndpoint: String): Observable<ClientPublicInfo> {
+        return grabSdkApi.fetchClientInfo(clientPublicEndpoint)
     }
 
     override fun getToken(tokenEndpoint: String, tokenRequest: TokenRequest): Observable<TokenAPIResponse> {

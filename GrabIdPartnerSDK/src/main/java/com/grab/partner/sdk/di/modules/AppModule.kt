@@ -16,8 +16,8 @@ import com.grab.partner.sdk.keystore.CipherWrapper
 import com.grab.partner.sdk.keystore.IAndroidKeyStoreWrapper
 import com.grab.partner.sdk.keystore.ICipher
 import com.grab.partner.sdk.scheduleprovider.SchedulerProvider
-import com.grab.partner.sdk.utils.ChromeCustomTab
-import com.grab.partner.sdk.utils.IChromeCustomTab
+import com.grab.partner.sdk.utils.LaunchAppForAuthorizationImpl
+import com.grab.partner.sdk.utils.LaunchAppForAuthorization
 import com.grab.partner.sdk.utils.IUtility
 import com.grab.partner.sdk.utils.Utility
 import dagger.Module
@@ -28,7 +28,7 @@ import javax.inject.Singleton
 internal class AppModule(private var context: Context) {
     @Provides
     @Singleton
-    fun provideChromeCustomTab(): IChromeCustomTab = ChromeCustomTab()
+    fun provideLaunchAppForAuthorization(): LaunchAppForAuthorization = LaunchAppForAuthorizationImpl()
 
     @Provides
     @Singleton

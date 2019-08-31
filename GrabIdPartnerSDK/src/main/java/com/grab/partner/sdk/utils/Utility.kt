@@ -11,15 +11,21 @@ package com.grab.partner.sdk.utils
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.res.Resources
+import android.database.Observable
 import android.net.Uri
 import android.util.Base64
+import android.util.Log
 import com.google.gson.Gson
 import com.grab.partner.sdk.GrabIdPartner
 import com.grab.partner.sdk.GrabIdPartner.Companion.ENCODING_SETTING
 import com.grab.partner.sdk.models.IdTokenInfo
 import com.grab.partner.sdk.models.LoginSession
+import com.grab.partner.sdk.models.ProtocolInfo
+import io.reactivex.Maybe
+import io.reactivex.Single
 import java.net.URLDecoder
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -39,6 +45,11 @@ interface IUtility {
      * @param context The application context.
      */
     fun getPartnerInfo(context: Context?, attribute: String): String?
+
+    /**
+     * Method to check if a specific package is installed in the device
+     */
+    fun isPackageInstalled(protocols: List<String>, packageManager: PackageManager): Maybe<ProtocolInfo>
 
     /**
      * Retrieve the string values from the string.xml file
@@ -92,14 +103,14 @@ interface IUtility {
     fun retrieveObjectFromSharedPref(loginSession: LoginSession, sharedPreferences: SharedPreferences, objectType: ObjectType): String?
 
     /**
-     * serialize string to LoginSession object
+     * Deserialize string to LoginSession object
      */
-    fun serializeToLoginSession(loginSessionString: String): LoginSession?
+    fun deSerializeToLoginSession(loginSessionString: String): LoginSession?
 
     /**
-     * serialize string to IdTokenInfo object
+     * Deserialize string to IdTokenInfo object
      */
-    fun serializeToIdTokenInfo(idTokenInfoString: String): IdTokenInfo?
+    fun deSerializeToIdTokenInfo(idTokenInfoString: String): IdTokenInfo?
 
     /**
      * Method to delete the loginSession object from shared preference
@@ -257,9 +268,9 @@ internal class Utility(var context: Context) : IUtility {
     }
 
     /**
-     * serialize string to LoginSession object
+     * Deserialize string to LoginSession object
      */
-    override fun serializeToLoginSession(loginSessionString: String): LoginSession? {
+    override fun deSerializeToLoginSession(loginSessionString: String): LoginSession? {
         var gson = Gson()
         return try {
             gson.fromJson(loginSessionString, LoginSession::class.java)
@@ -269,9 +280,9 @@ internal class Utility(var context: Context) : IUtility {
     }
 
     /**
-     * serialize string to IdTokenInfo object
+     * Deserialize string to IdTokenInfo object
      */
-    override fun serializeToIdTokenInfo(idTokenInfoString: String): IdTokenInfo? {
+    override fun deSerializeToIdTokenInfo(idTokenInfoString: String): IdTokenInfo? {
         var gson = Gson()
         return try {
             gson.fromJson(idTokenInfoString, IdTokenInfo::class.java)
@@ -335,6 +346,33 @@ internal class Utility(var context: Context) : IUtility {
         loginSession.idTokenVerificationEndpoint = ""
         loginSession.codeChallenge = ""
         loginSession.redirectUri = ""
+    }
+
+    override fun isPackageInstalled(protocols: List<String>, packageManager: PackageManager): Maybe<ProtocolInfo> {
+        var gson = Gson()
+
+        for (customProtocol in protocols) {
+            var protocolInfo = gson.fromJson(customProtocol, ProtocolInfo::class.java)
+            // if any of the required parameters are missing then no need to proceed
+            if (protocolInfo.minversion_adr.isNullOrEmpty() || protocolInfo.package_adr.isNullOrEmpty() || protocolInfo.protocol_adr.isNullOrEmpty()) {
+                continue
+            }
+            // check if the package is installed
+            try {
+                var packageInfo = packageManager.getPackageInfo(protocolInfo.package_adr, 0)
+                if (packageInfo != null) {
+                    var installedAppVersion = Version(packageInfo.versionName)
+                    var requiredAppVersion = Version(protocolInfo.minversion_adr)
+
+                    if (installedAppVersion >= requiredAppVersion) {
+                        return Maybe.just(protocolInfo)
+                    }
+                }
+            } catch (ex: Exception) {
+                // do nothing
+            }
+        }
+        return Maybe.empty()
     }
 }
 

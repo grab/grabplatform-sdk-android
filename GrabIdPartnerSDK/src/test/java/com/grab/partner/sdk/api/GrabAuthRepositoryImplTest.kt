@@ -8,10 +8,7 @@
 
 package com.grab.partner.sdk.api
 
-import com.grab.partner.sdk.models.DiscoveryResponse
-import com.grab.partner.sdk.models.IdTokenInfo
-import com.grab.partner.sdk.models.TokenAPIResponse
-import com.grab.partner.sdk.models.TokenRequest
+import com.grab.partner.sdk.models.*
 import io.reactivex.observers.TestObserver
 import org.junit.Test
 import java.util.Date
@@ -22,6 +19,7 @@ class GrabAuthRepositoryImplTest {
     private val testObserverDiscoveryResponse = TestObserver<DiscoveryResponse>()
     private val testObserverTokenAPIResponse = TestObserver<TokenAPIResponse>()
     private val testObserverIdTokenInfo = TestObserver<IdTokenInfo>()
+    private val testObserverClientPublicInfo = TestObserver<ClientPublicInfo>()
 
     @Test
     fun callDiscovery() {
@@ -34,6 +32,7 @@ class GrabAuthRepositoryImplTest {
         // verify callDiscovery return using TestObserver
         testObserverDiscoveryResponse.assertComplete()
         testObserverDiscoveryResponse.assertValue(discoveryResponse)
+        testObserverDiscoveryResponse.dispose()
     }
 
     @Test
@@ -49,6 +48,7 @@ class GrabAuthRepositoryImplTest {
         // verify getToken return using TestObserver
         testObserverTokenAPIResponse.assertComplete()
         testObserverTokenAPIResponse.assertValue(tokenAPIResponse)
+        testObserverTokenAPIResponse.dispose()
     }
 
     @Test
@@ -73,6 +73,18 @@ class GrabAuthRepositoryImplTest {
         // verify getIdTokenInfo return using TestObserver
         testObserverIdTokenInfo.assertComplete()
         testObserverIdTokenInfo.assertValue(idTokenInfo)
+        testObserverIdTokenInfo.dispose()
+    }
+
+    @Test
+    fun fetchClientPublicInfo() {
+        var clientPublicInfo = ClientPublicInfo(listOf(), FAKE_HOME_PAGE_URL, FAKE_LOGO_URL, FAKE_PRIVACY_POLICY_URL, FAKE_PRODUCT_NAME, FAKE_TERMS_OF_SERVICE_URL)
+        stubGrabSdkApi.setFetchClientInfo(clientPublicInfo)
+        grabAuthRepositoryImpl.fetchClientPublicInfo(FAKE_CLIENT_PUBLIC_ENDPOINT).subscribe(testObserverClientPublicInfo)
+        // verify clientPublicInfo return using TestObserver
+        testObserverClientPublicInfo.assertComplete()
+        testObserverClientPublicInfo.assertValue(clientPublicInfo)
+        testObserverClientPublicInfo.dispose()
     }
 
     companion object {
@@ -80,6 +92,7 @@ class GrabAuthRepositoryImplTest {
         private const val FAKE_TOKEN_ENDPOINT = "fake_token_endpoint"
         private const val FAKE_AUTH_ENDPOINT = "fake_auth_endpoint"
         private const val FAKE_ID_TOKEN_ENDPOINT = "fake_id_token_endpoint"
+        private const val FAKE_CLIENT_PUBLIC_ENDPOINT = "fake_client_public_endpoint"
         private const val FAKE_ACCESS_TOKEN = "fake_access_token"
         private const val FAKE_TOKEN_TYPE = "fake_token_type"
         private const val FAKE_EXPIRES_IN = "fake_expires_in"
@@ -100,5 +113,10 @@ class GrabAuthRepositoryImplTest {
         private const val FAKE_ISSUER = "fake_issuer"
         private const val FAKE_TOKEN_ID_INTERNAL = "fake_token_id_internal"
         private const val FAKE_PARTNER_USER_ID = "fake_partner_user_id"
+        private const val FAKE_HOME_PAGE_URL = "home_page_url"
+        private const val FAKE_LOGO_URL = "logo_url"
+        private const val FAKE_PRIVACY_POLICY_URL = "privacy_policy_url"
+        private const val FAKE_PRODUCT_NAME = "product_name"
+        private const val FAKE_TERMS_OF_SERVICE_URL = "terms_of_service_url"
     }
 }

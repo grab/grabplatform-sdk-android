@@ -10,9 +10,9 @@ package com.grab.partner.sdk.sampleapp.di.modules
 
 import android.app.Application
 import android.content.Context
-import com.grab.partner.sdk.sample.viewmodel.MainActivityViewModel
 import com.grab.partner.sdk.sampleapp.api.GrabRepository
 import com.grab.partner.sdk.sampleapp.scheduleprovider.SchedulerProvider
+import com.grab.partner.sdk.sampleapp.viewmodel.MainActivityViewModel
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton

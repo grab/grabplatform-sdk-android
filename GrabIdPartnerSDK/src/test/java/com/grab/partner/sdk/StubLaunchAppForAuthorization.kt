@@ -10,10 +10,10 @@ package com.grab.partner.sdk
 
 import android.content.Context
 import com.grab.partner.sdk.models.LoginSession
-import com.grab.partner.sdk.utils.IChromeCustomTab
+import com.grab.partner.sdk.utils.LaunchAppForAuthorization
 
-class StubChromeCustomTab: IChromeCustomTab {
-    override fun openChromeCustomTab(context: Context, loginSession: LoginSession, callback: LoginCallback) {
+class StubLaunchAppForAuthorization : LaunchAppForAuthorization {
+    override fun launchOAuthFlow(context: Context, loginSession: LoginSession, callback: LoginCallback, shouldLaunchNativeApp: Boolean) {
         callback.onSuccess()
     }
 

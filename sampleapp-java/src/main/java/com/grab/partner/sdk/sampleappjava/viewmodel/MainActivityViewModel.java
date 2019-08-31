@@ -9,8 +9,11 @@
 package com.grab.partner.sdk.sampleappjava.viewmodel;
 
 import android.content.Context;
+import android.databinding.ObservableField;
+import android.databinding.ObservableInt;
 import android.text.method.ScrollingMovementMethod;
 
+import android.view.View;
 import com.grab.partner.sdk.ExchangeTokenCallback;
 import com.grab.partner.sdk.GetIdTokenInfoCallback;
 import com.grab.partner.sdk.GrabIdPartner;
@@ -30,13 +33,17 @@ public class MainActivityViewModel {
     private Context context = null;
     private String redirectUrl;
     private ActivityMainBinding binding;
+    private ObservableField<String> stringMessage = new ObservableField<>();
+    private ObservableInt progressBarVisibility = new ObservableInt(View.GONE);
 
     public MainActivityViewModel(Context context, ActivityMainBinding binding) {
         this.context = context;
         this.binding = binding;
+        binding.defaulttextview.setMovementMethod(new ScrollingMovementMethod());
     }
 
     public void startLoginFlow() {
+        progressBarVisibility.set(View.VISIBLE);
         grabIdPartner.loadLoginSession(new LoginSessionCallback() {
             @Override
             public void onSuccess(@NotNull final LoginSession loginSession) {
@@ -44,21 +51,23 @@ public class MainActivityViewModel {
                 grabIdPartner.login(loginSession, context, new LoginCallback() {
                     @Override
                     public void onSuccess() {
-                        if(!loginSession.getAccessToken().isEmpty()) {
-                            printTokenExchangeResponse(MainActivityViewModel.loginSession);
+                        if (!loginSession.getAccessToken().isEmpty()) {
+                            stringMessage.set(createTokenResponse(loginSession));
                         }
+                        progressBarVisibility.set(View.GONE);
                     }
 
                     @Override
                     public void onError(@NotNull GrabIdPartnerError grabIdPartnerError) {
-                        printMessage(grabIdPartnerError.getLocalizeMessage());
+                        stringMessage.set(grabIdPartnerError.getLocalizeMessage());
+                        progressBarVisibility.set(View.GONE);
                     }
                 });
             }
 
             @Override
             public void onError(@NotNull GrabIdPartnerError grabIdPartnerError) {
-                printMessage(grabIdPartnerError.getLocalizeMessage());
+                stringMessage.set(grabIdPartnerError.getLocalizeMessage());
             }
         });
     }
@@ -72,16 +81,19 @@ public class MainActivityViewModel {
             grabIdPartner.exchangeToken(loginSession, redirectUrl, new ExchangeTokenCallback() {
                 @Override
                 public void onSuccess() {
-                    printTokenExchangeResponse(loginSession);
+                    stringMessage.set(createTokenResponse(loginSession));
+                    progressBarVisibility.set(View.GONE);
                 }
 
                 @Override
                 public void onError(@NotNull GrabIdPartnerError grabIdPartnerError) {
-                    printMessage(grabIdPartnerError.getLocalizeMessage());
+                    stringMessage.set(grabIdPartnerError.getLocalizeMessage());
+                    progressBarVisibility.set(View.GONE);
                 }
             });
         } else {
-            printMessage("Please initiate login flow first, loginSession is null");
+            stringMessage.set("Please initiate login flow first, loginSession is null");
+            progressBarVisibility.set(View.GONE);
         }
     }
 
@@ -91,18 +103,26 @@ public class MainActivityViewModel {
 
                 @Override
                 public void onSuccess(@NotNull IdTokenInfo idTokenInfo) {
-                    printIdTokenResponse(idTokenInfo);
+                    stringMessage.set(createIdTokenResponse(idTokenInfo));
                 }
 
                 @Override
                 public void onError(@NotNull GrabIdPartnerError grabIdPartnerError) {
                     String errorMessage = "Error occurred in getIdTokenInfo API. \nError Message: " + grabIdPartnerError.getLocalizeMessage();
-                    printMessage(errorMessage);
+                    stringMessage.set(errorMessage);
                 }
             });
         } else {
-            printMessage("Please initiate login flow first, loginSession is null");
+            stringMessage.set("Please initiate login flow first, loginSession is null");
         }
+    }
+
+    public ObservableInt progressBarVisibility() {
+        return this.progressBarVisibility;
+    }
+
+    public ObservableField<String> stringMessage() {
+        return this.stringMessage;
     }
 
     /**
@@ -114,12 +134,12 @@ public class MainActivityViewModel {
                 @Override
                 public void onSuccess() {
                     clearTextView();
-                    printMessage("Successfully cleared loginSession for the user");
+                    stringMessage.set("Successfully cleared loginSession for the user");
                 }
 
                 @Override
                 public void onError(@NotNull GrabIdPartnerError grabIdPartnerError) {
-                    printMessage(grabIdPartnerError.getLocalizeMessage());
+                    stringMessage.set(grabIdPartnerError.getLocalizeMessage());
                 }
             });
         }
@@ -132,65 +152,14 @@ public class MainActivityViewModel {
         binding.defaulttextview.setText("");
     }
 
-    /**
-     * Print the token info endpoint response in the TextView control     *
-     */
-    private void printIdTokenResponse(IdTokenInfo idTokenInfo) {
-        binding.defaulttextview.append("\n\n");
-        binding.defaulttextview.append("---------------------------------------------------------------------------- \n");
-        binding.defaulttextview.append("\nResponse from oauth2/id_tokens/token_info \n");
-        binding.defaulttextview.append("audience:\n" + idTokenInfo.getAudience());
-        binding.defaulttextview.append("\n\n");
-        binding.defaulttextview.append("expiration:\n" + idTokenInfo.getExpiration());
-        binding.defaulttextview.append("\n\n");
-        binding.defaulttextview.append("issueDate:\n" + idTokenInfo.getIssueDate());
-        binding.defaulttextview.append("\n\n");
-        binding.defaulttextview.append("issuer:\n" + idTokenInfo.getIssuer());
-        binding.defaulttextview.append("\n\n");
-        binding.defaulttextview.append("notValidBefore:\n" + idTokenInfo.getNotValidBefore());
-        binding.defaulttextview.append("\n\n");
-        binding.defaulttextview.append("partnerId:\n" + idTokenInfo.getPartnerId());
-        binding.defaulttextview.append("\n\n");
-        binding.defaulttextview.append("partnerUserId:\n" + idTokenInfo.getPartnerUserId());
-        binding.defaulttextview.append("\n\n");
-        binding.defaulttextview.append("service:\n" + idTokenInfo.getService());
-        binding.defaulttextview.append("\n\n");
-        binding.defaulttextview.append("tokenId:\n" + idTokenInfo.getTokenId());
-        binding.defaulttextview.append("\n\n");
-        binding.defaulttextview.append("nonce:\n" + idTokenInfo.getNonce());
-        // invalidates all binding expressions and requests a new rebind to refresh UI.
-        binding.defaulttextview.invalidate();
+    private String createTokenResponse(LoginSession loginSession) {
+        String tokenResponseString = "---------------------------------------------------------------------------- \n" + "Response from oauth2/token" + "\n\n access_token: \n %s" + "\n\n id_token: \n %s" + "\n\n refresh_token: \n %s" + "\n\nexpires_in: \n %s";
+        return String.format(tokenResponseString, loginSession.getAccessToken(), loginSession.getIdToken(), loginSession.getRefreshToken(), loginSession.getAccessTokenExpiresAt());
     }
 
-    /**
-     * Print the token exchange endpoint response in the TextView control
-     */
-    public void printTokenExchangeResponse(LoginSession loginSession) {
-        binding.defaulttextview.setMovementMethod(ScrollingMovementMethod.getInstance());
-        binding.defaulttextview.setText("---------------------------------------------------------------------------- \n");
-        binding.defaulttextview.append("Response from oauth2/token \n");
-        binding.defaulttextview.append("access_token:\n" + loginSession.getAccessToken());
-
-        binding.defaulttextview.append("\n\n");
-        binding.defaulttextview.append("id_token:\n" + loginSession.getIdToken());
-
-        binding.defaulttextview.append("\n\n");
-        binding.defaulttextview.append("refresh_token:\n" + loginSession.getRefreshToken());
-
-        binding.defaulttextview.append("\n\n");
-        binding.defaulttextview.append("expires_in:\n" + loginSession.getAccessTokenExpiresAt());
-
-        // invalidates all binding expressions and requests a new rebind to refresh UI.
-        binding.defaulttextview.invalidate();
-    }
-
-    /**
-     * This is to print any message in the default textview
-     */
-    public void printMessage(String message) {
-        binding.defaulttextview.setMovementMethod(ScrollingMovementMethod.getInstance());
-        binding.defaulttextview.append("\n\n");
-        binding.defaulttextview.append(message);
-        binding.defaulttextview.invalidate();
+    private String createIdTokenResponse(IdTokenInfo idTokenInfo) {
+        String idTokenResponseString = "----------------------------------------------------------------------------\n" + "Response from oauth2/id_tokens/token_info" + "\n\n audience: \n %s" + "\n\n expiration: \n %s" + "\n\n issueDate: \n %s" + "\n\n issuer: \n %s" +
+                "\n\n notValidBefore: \n %s" + "\n\n partnerId: \n %s" + "\n\n partnerUserId: \n %s" + "\n\n service: \n %s" + "\n\n tokenId: \n %s" + "\n\n nonce: \n %s";
+        return String.format(idTokenResponseString, idTokenInfo.getAudience(), idTokenInfo.getExpiration(), idTokenInfo.getIssueDate(), idTokenInfo.getIssuer(), idTokenInfo.getNotValidBefore(), idTokenInfo.getPartnerId(), idTokenInfo.getPartnerUserId(), idTokenInfo.getService(), idTokenInfo.getTokenId(), idTokenInfo.getNonce());
     }
 }

@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) Grab Taxi Holdings PTE LTD (GRAB)
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
 package com.grab.partner.sdk
 
 import android.content.Context
@@ -30,7 +37,7 @@ internal open class StubGrabIdPartner : GrabIdPartnerProtocol {
         }
     }
 
-    override fun loadLoginSession(state: String, clientId: String, redirectUri: String, serviceDiscoveryUrl: String, scope: String, acrValues: String?, request: String?, loginHint: String?, idTokenHint: String?, callback: LoginSessionCallback) {
+    override fun loadLoginSession(state: String, clientId: String, redirectUri: String, serviceDiscoveryUrl: String, scope: String, acrValues: String?, request: String?, loginHint: String?, idTokenHint: String?, callback: LoginSessionCallback, prompt: String?) {
         if (callbackStatus) {
             callback.onError(settableError)
         } else {

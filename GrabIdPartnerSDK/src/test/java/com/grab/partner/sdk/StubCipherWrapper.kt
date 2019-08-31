@@ -14,18 +14,18 @@ import java.security.Key
 internal const val CONST_ENCRYPTED_STRING = "encrypted_string"
 
 class StubCipherWrapper : ICipher {
-    private var decrypted_string = ""
+    private var decryptedString = ""
 
     override fun encrypt(data: String, key: Key?): String {
         return CONST_ENCRYPTED_STRING
     }
 
     override fun decrypt(data: String, key: Key?): String {
-        return this.decrypted_string
+        return this.decryptedString
     }
 
     fun setDecryptedString(decrypted_string: String){
-        this.decrypted_string = decrypted_string
+        this.decryptedString = decrypted_string
     }
 
     override fun encryptInStages(data: String): String {

@@ -19,6 +19,7 @@ interface GrabSdkManager {
         var request: String? = EMPTY_STRING_CONST
         var loginHint: String? = EMPTY_STRING_CONST
         var idTokenHint: String? = EMPTY_STRING_CONST
+        var prompt: String? = EMPTY_STRING_CONST
         // The OpenID Connect ACR optional parameter to the authorize endpoint will be utilized to pass in
         // service id info and device ID
         var acrValues: String? = EMPTY_STRING_CONST

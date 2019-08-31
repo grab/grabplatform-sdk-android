@@ -28,7 +28,7 @@ internal class NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson?): Retrofit {
         return Retrofit.Builder()
-                // dummy base url to create the retrofit instance, it will be replaced later with real domain
+                // dummy base url to create the retrofit instance, it will be replaced later with real base URL
                 .baseUrl("https://dummy/")
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create(gson))

@@ -8,5 +8,4 @@
 
 package com.grab.partner.sdk.sampleapp.utils
 
-const val ERROR_ACCESSING_PROTECTED_RESOURCE="Error accessing protected resource"
 const val PROTECTED_RESOURCE_ENDPOINT_ATTRIBUTE="com.grab.partner.sdk.protectedResource"

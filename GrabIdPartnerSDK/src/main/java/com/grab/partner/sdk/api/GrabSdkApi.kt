@@ -8,10 +8,8 @@
 
 package com.grab.partner.sdk.api
 
-import com.grab.partner.sdk.models.DiscoveryResponse
-import com.grab.partner.sdk.models.IdTokenInfo
-import com.grab.partner.sdk.models.TokenAPIResponse
-import com.grab.partner.sdk.models.TokenRequest
+import com.grab.partner.sdk.models.*
+import io.reactivex.Observable
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -19,18 +17,22 @@ import retrofit2.http.Query
 import retrofit2.http.Url
 
 internal interface GrabSdkApi {
+    // future work: convert these to Single
     @GET
-    fun fetchDiscovery(@Url url: String): io.reactivex.Observable<DiscoveryResponse>
+    fun fetchDiscovery(@Url url: String): Observable<DiscoveryResponse>
+
+    @GET
+    fun fetchClientInfo(@Url url: String): Observable<ClientPublicInfo>
 
     @POST
     fun getToken(@Url url : String,
             @Body request: TokenRequest
-    ): io.reactivex.Observable<TokenAPIResponse>
+    ): Observable<TokenAPIResponse>
 
     @GET
     fun getIdTokenInfo(@Url url: String,
                       @Query("client_id") client_id: String,
                       @Query("id_token") id_token: String,
                       @Query("nonce") nonce: String
-    ): io.reactivex.Observable<IdTokenInfo>
+    ): Observable<IdTokenInfo>
 }

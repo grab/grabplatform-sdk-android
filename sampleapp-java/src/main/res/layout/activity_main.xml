@@ -58,6 +58,18 @@
                 android:onClick="@{()-> vm.clearGrabSignInSession()}"
                 android:text="@string/logout_button_text" />
         </LinearLayout>
+        <RelativeLayout
+                android:id="@+id/progressBarlayout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="@{vm.progressBarVisibility}" >
+
+            <ProgressBar
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:indeterminateDrawable="@drawable/progress"
+                    android:layout_centerInParent="true" />
+        </RelativeLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -71,8 +83,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:padding="8dp"
-                android:scrollbars="vertical"/>
-
+                android:scrollbars="vertical"
+                android:text="@{vm.stringMessage}"/>
         </LinearLayout>
     </LinearLayout>
 </layout>

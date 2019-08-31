@@ -8,16 +8,14 @@
 
 package com.grab.partner.sdk.api
 
-import com.grab.partner.sdk.models.DiscoveryResponse
-import com.grab.partner.sdk.models.IdTokenInfo
-import com.grab.partner.sdk.models.TokenAPIResponse
-import com.grab.partner.sdk.models.TokenRequest
+import com.grab.partner.sdk.models.*
 import io.reactivex.Observable
 
-internal class StubGrabSdkApi: GrabSdkApi {
+internal class StubGrabSdkApi : GrabSdkApi {
     private var discoveryResponse: DiscoveryResponse? = null
     private var tokenAPIResponse: TokenAPIResponse? = null
     private var idTokenInfo: IdTokenInfo? = null
+    private var clientPublicInfo: ClientPublicInfo? = null
 
     override fun fetchDiscovery(url: String): Observable<DiscoveryResponse> {
         return Observable.just(this.discoveryResponse)
@@ -25,6 +23,14 @@ internal class StubGrabSdkApi: GrabSdkApi {
 
     fun setFetchDiscoveryAPIResponse(discoveryResponse: DiscoveryResponse) {
         this.discoveryResponse = discoveryResponse
+    }
+
+    override fun fetchClientInfo(url: String): Observable<ClientPublicInfo> {
+        return Observable.just(this.clientPublicInfo)
+    }
+
+    fun setFetchClientInfo(clientPublicInfo: ClientPublicInfo) {
+        this.clientPublicInfo = clientPublicInfo
     }
 
     override fun getToken(url: String, request: TokenRequest): Observable<TokenAPIResponse> {

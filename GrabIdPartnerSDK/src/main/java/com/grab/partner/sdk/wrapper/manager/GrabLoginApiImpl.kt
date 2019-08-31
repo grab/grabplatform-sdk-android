@@ -6,7 +6,7 @@ import com.grab.partner.sdk.*
 import com.grab.partner.sdk.models.GrabIdPartnerError
 import com.grab.partner.sdk.models.LoginSession
 
-class GrabLoginApiImpl (private val grabIdPartner: GrabIdPartnerProtocol) : GrabLoginApi {
+class GrabLoginApiImpl(private val grabIdPartner: GrabIdPartnerProtocol) : GrabLoginApi {
 
     override fun doLogin(context: Context, state: String, builder: GrabSdkManager.Builder) {
 
@@ -38,7 +38,7 @@ class GrabLoginApiImpl (private val grabIdPartner: GrabIdPartnerProtocol) : Grab
                         if (builder.listener != null)
                             builder.listener?.onError(grabIdPartnerError)
                     }
-                })
+                }, builder.prompt)
     }
 
     override fun exchangeToken(loginSession: LoginSession, redirectUrl: String, builder: GrabSdkManager.Builder) {
