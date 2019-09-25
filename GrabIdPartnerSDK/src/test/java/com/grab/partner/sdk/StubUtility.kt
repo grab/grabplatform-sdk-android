@@ -44,7 +44,7 @@ class StubUtility : IUtility {
         this.partnerInfoMap = map
     }
 
-    override fun readResourceString(mystring: Int): String {
+    override fun readResourceString(context: Context?, mystring: Int): String {
         return CONST_READ_RESOURCE_STRING
     }
 

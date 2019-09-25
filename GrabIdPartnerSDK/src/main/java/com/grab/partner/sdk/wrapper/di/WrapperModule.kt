@@ -39,7 +39,7 @@ class WrapperModule {
     @Provides
     @Singleton
     fun provideUtility(context: Context): IUtility {
-        return Utility(context)
+        return Utility()
     }
 
     @Provides
