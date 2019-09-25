@@ -44,7 +44,7 @@ internal class AppModule(private var context: Context) {
 
     @Provides
     @Singleton
-    fun provideUtility(): IUtility = Utility(context)
+    fun provideUtility(): IUtility = Utility()
 
     @Provides
     @Singleton

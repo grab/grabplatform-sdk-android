@@ -7,7 +7,6 @@
  */
 package com.grab.partner.sdk.utils
 
-import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import com.google.gson.Gson
@@ -17,9 +16,8 @@ import com.nhaarman.mockitokotlin2.whenever
 import org.junit.Test
 
 class UtilityTest {
-    private var context = mock<Context>()
     private var packageManager = mock<PackageManager>()
-    private var utility = Utility(context)
+    private var utility = Utility()
     private val testPackage1 = "com.test1"
     private val minVersionTestPackage1 = "5.54.0"
     private val testPackage2 = "com.test2"

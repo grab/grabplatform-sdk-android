@@ -54,7 +54,7 @@ interface IUtility {
     /**
      * Retrieve the string values from the string.xml file
      */
-    fun readResourceString(mystring: Int): String
+    fun readResourceString(context: Context?, mystring: Int): String
 
     /**
      * Method to read value of any query string parameter
@@ -128,7 +128,7 @@ interface IUtility {
     fun clearLoginSession(loginSession: LoginSession)
 }
 
-internal class Utility(var context: Context) : IUtility {
+internal class Utility : IUtility {
     /**
      * Retrieve partner info which later will be used to verify partner.
      * The info should be registered inside AndroidManifest.xml in order to identify partner.
@@ -154,9 +154,9 @@ internal class Utility(var context: Context) : IUtility {
     /**
      * Retrieve the string values from the string.xml file
      */
-    override fun readResourceString(mystring: Int): String {
+    override fun readResourceString(context: Context?, mystring: Int): String {
         return try {
-            context.resources.getString(mystring)
+            context?.resources?.getString(mystring) ?: ""
         } catch (exception: Resources.NotFoundException) {
             ""
         }
