@@ -21,12 +21,20 @@ const val EMPTY_STRING_CONST = ""
 class GrabSdkManagerImpl private constructor(): GrabSdkManager {
 
     private object Holder {
-        val INSTANCE: GrabSdkManagerImpl  = GrabSdkManagerImpl()
+        val grabSdkManager: GrabSdkManagerImpl  = GrabSdkManagerImpl()
     }
+
 
     companion object {
         lateinit var component: WrapperComponent
-        val manager: GrabSdkManagerImpl by lazy { Holder.INSTANCE }
+
+        @Volatile private var INSTANCE: GrabSdkManagerImpl? = null
+
+        fun getInstance(): GrabSdkManagerImpl =
+                INSTANCE ?: synchronized(this) {
+                    INSTANCE ?: Holder.grabSdkManager.also { INSTANCE = it }
+                }
+
     }
 
     @Inject lateinit var utility: IUtility
@@ -88,5 +96,6 @@ class GrabSdkManagerImpl private constructor(): GrabSdkManager {
     override fun teardown() {
         context = null
         grabIdPartner.teardown()
+        INSTANCE = null
     }
 }
