@@ -81,7 +81,7 @@ interface GrabSdkManager {
         }
 
         fun build(context: Context): GrabSdkManager {
-            val manager = GrabSdkManagerImpl.manager
+            val manager = GrabSdkManagerImpl.getInstance()
             manager.init(context)
 
             state = manager.utility.getRandomString()
