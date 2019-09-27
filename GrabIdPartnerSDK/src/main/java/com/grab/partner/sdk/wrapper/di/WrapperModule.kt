@@ -1,6 +1,5 @@
 package com.grab.partner.sdk.wrapper.di
 
-import android.content.Context
 import com.grab.partner.sdk.GrabIdPartner
 import com.grab.partner.sdk.GrabIdPartnerProtocol
 import com.grab.partner.sdk.utils.IUtility
@@ -38,7 +37,7 @@ class WrapperModule {
 
     @Provides
     @Singleton
-    fun provideUtility(context: Context): IUtility {
+    fun provideUtility(): IUtility {
         return Utility()
     }
 
