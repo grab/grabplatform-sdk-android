@@ -21,9 +21,8 @@ const val EMPTY_STRING_CONST = ""
 class GrabSdkManagerImpl private constructor(): GrabSdkManager {
 
     private object Holder {
-        val grabSdkManager: GrabSdkManagerImpl  = GrabSdkManagerImpl()
+        fun createInstance() = GrabSdkManagerImpl()
     }
-
 
     companion object {
         lateinit var component: WrapperComponent
@@ -32,9 +31,8 @@ class GrabSdkManagerImpl private constructor(): GrabSdkManager {
 
         fun getInstance(): GrabSdkManagerImpl =
                 INSTANCE ?: synchronized(this) {
-                    INSTANCE ?: Holder.grabSdkManager.also { INSTANCE = it }
+                    INSTANCE ?: Holder.createInstance().also { INSTANCE = it }
                 }
-
     }
 
     @Inject lateinit var utility: IUtility
@@ -45,11 +43,7 @@ class GrabSdkManagerImpl private constructor(): GrabSdkManager {
     private var context: Context? = null
 
     override fun init(context: Context) {
-        component = DaggerWrapperComponent.builder()
-                .manager(this)
-                .context(context)
-                .build()
-
+        component = DaggerWrapperComponent.builder().build()
         component.inject(this)
         this.context = context
         grabIdPartner.initialize(context)
@@ -96,6 +90,8 @@ class GrabSdkManagerImpl private constructor(): GrabSdkManager {
     override fun teardown() {
         context = null
         grabIdPartner.teardown()
+        sessions.clear()
+        clientStates.clear()
         INSTANCE = null
     }
 }
