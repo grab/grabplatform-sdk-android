@@ -49,7 +49,7 @@ interface IUtility {
     /**
      * Method to check if a specific package is installed in the device
      */
-    fun isPackageInstalled(protocols: List<String>, packageManager: PackageManager): Maybe<ProtocolInfo>
+    fun isPackageInstalled(protocols: List<String>?, packageManager: PackageManager): Maybe<ProtocolInfo>
 
     /**
      * Retrieve the string values from the string.xml file
@@ -348,28 +348,30 @@ internal class Utility : IUtility {
         loginSession.redirectUri = ""
     }
 
-    override fun isPackageInstalled(protocols: List<String>, packageManager: PackageManager): Maybe<ProtocolInfo> {
+    override fun isPackageInstalled(protocols: List<String>?, packageManager: PackageManager): Maybe<ProtocolInfo> {
         var gson = Gson()
 
-        for (customProtocol in protocols) {
-            var protocolInfo = gson.fromJson(customProtocol, ProtocolInfo::class.java)
-            // if any of the required parameters are missing then no need to proceed
-            if (protocolInfo.minversion_adr.isNullOrEmpty() || protocolInfo.package_adr.isNullOrEmpty() || protocolInfo.protocol_adr.isNullOrEmpty()) {
-                continue
-            }
-            // check if the package is installed
-            try {
-                var packageInfo = packageManager.getPackageInfo(protocolInfo.package_adr, 0)
-                if (packageInfo != null) {
-                    var installedAppVersion = Version(packageInfo.versionName)
-                    var requiredAppVersion = Version(protocolInfo.minversion_adr)
-
-                    if (installedAppVersion >= requiredAppVersion) {
-                        return Maybe.just(protocolInfo)
-                    }
+        if (protocols != null) {
+            for (customProtocol in protocols) {
+                var protocolInfo = gson.fromJson(customProtocol, ProtocolInfo::class.java)
+                // if any of the required parameters are missing then no need to proceed
+                if (protocolInfo.minversion_adr.isNullOrEmpty() || protocolInfo.package_adr.isNullOrEmpty() || protocolInfo.protocol_adr.isNullOrEmpty()) {
+                    continue
                 }
-            } catch (ex: Exception) {
-                // do nothing
+                // check if the package is installed
+                try {
+                    var packageInfo = packageManager.getPackageInfo(protocolInfo.package_adr, 0)
+                    if (packageInfo != null) {
+                        var installedAppVersion = Version(packageInfo.versionName)
+                        var requiredAppVersion = Version(protocolInfo.minversion_adr)
+
+                        if (installedAppVersion >= requiredAppVersion) {
+                            return Maybe.just(protocolInfo)
+                        }
+                    }
+                } catch (ex: Exception) {
+                    // do nothing
+                }
             }
         }
         return Maybe.empty()

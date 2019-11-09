@@ -12,6 +12,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
+import com.grab.partner.sdk.R.string.ERROR_FETCHING_CLIENT_PUBLIC_INFO_URL
 import com.grab.partner.sdk.R.string.ERROR_MISSING_ACCESS_TOKEN
 import com.grab.partner.sdk.R.string.ERROR_MISSING_ACCESS_TOKEN_EXPIRY
 import com.grab.partner.sdk.R.string.ERROR_MISSING_AUTHORIZE_ENDPOINT_IN_DISCOVERY_ENDPOINT
@@ -28,6 +30,7 @@ import com.grab.partner.sdk.R.string.ERROR_NONCE_MISMATCH_GET_ID_TOKEN_INFO
 import com.grab.partner.sdk.R.string.ERROR_NULL_DISCOVERY_ENDPOINT_RESPONSE
 import com.grab.partner.sdk.R.string.ERROR_SDK_IS_NOT_INITIALIZED
 import com.grab.partner.sdk.R.string.ERROR_STATE_MISMATCH
+import com.grab.partner.sdk.R.string.URL_INVOKED
 import com.grab.partner.sdk.api.GrabAuthRepository
 import com.grab.partner.sdk.di.components.DaggerMainComponent
 import com.grab.partner.sdk.di.modules.AppModule
@@ -43,8 +46,8 @@ import com.grab.partner.sdk.utils.LogUtils
 import com.grab.partner.sdk.utils.ObjectType
 import io.reactivex.Completable
 import io.reactivex.Maybe
+import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.functions.BiFunction
 import io.reactivex.rxkotlin.subscribeBy
 import retrofit2.HttpException
 import java.io.PrintWriter
@@ -62,7 +65,7 @@ internal const val PARTNER_SCOPE_ATTRIBUTE = "com.grab.partner.sdk.Scope"
 internal const val PARTNER_SERVICE_DISCOVERY_URL = "com.grab.partner.sdk.ServiceDiscoveryUrl"
 internal const val GRANT_TYPE = "authorization_code"
 internal const val UNKNOWN_HTTP_EXCEPTION = "error: unknown http exception"
-internal const val CLIENT_PUBLIC_INFO_URL = "https://api.stg-myteksi.com/grabid/v1/oauth2/clients/%s/public"
+internal const val CLIENT_ID = "{client_id}"
 
 class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
     @Inject
@@ -583,9 +586,19 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
      * Call the discovery endpoint to get the URLs
      */
     private fun callDiscovery(context: Context, loginSession: LoginSession, callback: LoginCallback) {
-        val clientPublicEndpoint = String.format(CLIENT_PUBLIC_INFO_URL, loginSession.clientId)
-        compositeDisposable.add(grabAuthRepository.callDiscovery(loginSession.serviceDiscoveryUrl).firstOrError().subscribeOn(schedulerProvider.io())
-                .zipWith(grabAuthRepository.fetchClientPublicInfo(clientPublicEndpoint).firstOrError().subscribeOn(schedulerProvider.io()), BiFunction { discoveryResponse: DiscoveryResponse, clientPublicInfoResponse: ClientPublicInfo -> Pair(discoveryResponse, clientPublicInfoResponse) })
+        compositeDisposable.add(grabAuthRepository.callDiscovery(loginSession.serviceDiscoveryUrl)
+                .flatMap { discoveryResponse ->
+                    // replace "{client_id}" string to get the final client_public_info_endpoint url
+                    discoveryResponse.client_public_info_endpoint = discoveryResponse.client_public_info_endpoint.replace(CLIENT_ID, loginSession.clientId)
+                    grabAuthRepository.fetchClientPublicInfo(discoveryResponse.client_public_info_endpoint)
+                            .map { discoveryResponse to it }
+                            .onErrorResumeNext { it: Throwable ->
+                                Observable.error<Pair<DiscoveryResponse, ClientPublicInfo>>(CustomInternalError(domain = GrabIdPartnerErrorDomain.CLIENTPUBLICINFO,
+                                        code = GrabIdPartnerErrorCode.errorInClientPublicInfoEndpoint,
+                                        extraMessage = "${utility.readResourceString(applicationContext, ERROR_FETCHING_CLIENT_PUBLIC_INFO_URL)} ${utility.readResourceString(applicationContext, URL_INVOKED)} ${discoveryResponse.client_public_info_endpoint}", cause = it))
+                            }
+                }
+                .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .subscribe({ result ->
                     // validate that response from the discovery endpoint has required parameters
@@ -646,7 +659,11 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                         errorJsonString = error.response().errorBody()?.string()
                                 ?: UNKNOWN_HTTP_EXCEPTION
                     }
-                    callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, errorJsonString, error))
+                    if (error is CustomInternalError) {
+                        callback.onError(GrabIdPartnerError(error.domain, error.code, errorJsonString + " " + error.extraMessage, error))
+                    } else {
+                        callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, errorJsonString, error))
+                    }
                     return@subscribe
                 }))
     }
@@ -775,6 +792,11 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         loginSession.accessTokenExpiresAtInternal = null
     }
 }
+
+/**
+ * Throwable error that can be used inside sdk, internal to sdk only not to be used as final error type to send to sdk consumer
+ */
+class CustomInternalError(var domain: GrabIdPartnerErrorDomain, var code: GrabIdPartnerErrorCode, var extraMessage: String = "", cause: Throwable) : Throwable(cause)
 
 interface LoginSessionCallback {
     fun onSuccess(loginSession: LoginSession)

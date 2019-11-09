@@ -34,6 +34,13 @@ class UtilityTest {
     }
 
     @Test
+    fun `test isPackageInstalled with protocols is null`() {
+        var observer = utility.isPackageInstalled(null, packageManager).test()
+        observer.assertComplete()
+        observer.assertResult()
+    }
+
+    @Test
     fun `test isPackageInstalled with valid package info from first protocol from the protocol list`() {
         whenever(packageManager.getPackageInfo(testPackage1, 0)).thenReturn(createPackageInfo(testPackage1, "5.56.0"))
         var observer = utility.isPackageInstalled(createProtocolList(), packageManager).test()

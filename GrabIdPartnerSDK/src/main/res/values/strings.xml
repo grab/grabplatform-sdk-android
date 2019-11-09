@@ -11,8 +11,10 @@
     <string name="ERROR_CONTEXT_IS_NULL">Application context cannot be null.</string>
     <string name="ERROR_MISSING_CLIENT_ID">Client Id must be defined in AndroidManifest.</string>
     <string name="ERROR_MISSING_CODE">Code is null or empty.</string>
+    <string name="URL_INVOKED">Url Invoked: </string>
     <string name="ERROR_STATE_MISMATCH">State received from redirect url does not match with loginSession state.</string>
     <string name="ERROR_MISSING_REDIRECT_URI">Redirect uri must be defined in AndroidManifest.</string>
+    <string name="ERROR_FETCHING_CLIENT_PUBLIC_INFO_URL">Error fetching client public info endpoint.</string>
     <string name="ERROR_NULL_DISCOVERY_ENDPOINT_RESPONSE">Discovery endpoint response is null.</string>
     <string name="ERROR_MISSING_AUTHORIZE_ENDPOINT_IN_DISCOVERY_ENDPOINT">Authorize endpoint is missing in discovery endpoint response.</string>
     <string name="ERROR_MISSING_TOKEN_ENDPOINT_IN_DISCOVERY_ENDPOINT">Token endpoint is missing in discovery endpoint response.</string>
