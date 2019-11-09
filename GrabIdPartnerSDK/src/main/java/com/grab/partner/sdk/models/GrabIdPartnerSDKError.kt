@@ -18,7 +18,8 @@ enum class GrabIdPartnerErrorCode {
     invalidRedirectURI,             // Invalid redirect uri
     invalidDiscoveryEndpoint,       // Invalid discovery endpoint
     errorInDiscoveryEndpoint,       // Error while fetching discovery endpoint
-    errorInExchangeTokenEndpoint,   // Error while fetching discovery endpoint
+    errorInClientPublicInfoEndpoint,// Error while fetching client public info endpoint
+    errorInExchangeTokenEndpoint,   // Error while fetching exchange token
     missingAccessToken,             // Access token is missing
     missingIdToken,                 // Id token is missing
     missingAccessTokenExpiry,       // Access token expiry is missing
@@ -59,6 +60,7 @@ enum class GrabIdPartnerErrorDomain {
     LOADLOGINSESSION,
     LOGIN,
     SERVICEDISCOVERY,
+    CLIENTPUBLICINFO,
     LAUNCHOAUTHFLOW,
     EXCHANGETOKEN,
     GETIDTOKENINFO,

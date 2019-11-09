@@ -43,9 +43,9 @@ class GrabIdPartnerTest {
     private var testGetIdTokenInfoCallback = TestGetIdTokenInfoCallback()
     private var loginSession = LoginSession()
     private var utility = StubUtility()
-    private var context: Context = Mockito.mock(Context::class.java)
-    private var sharedPreferences = Mockito.mock(SharedPreferences::class.java)
-    private var packageManager = Mockito.mock(PackageManager::class.java)
+    private var context: Context = mock(Context::class.java)
+    private var sharedPreferences = mock(SharedPreferences::class.java)
+    private var packageManager = mock(PackageManager::class.java)
     private var grabAuthRepository = StubGrabAuthRepository()
     private var scheduleProvider = TestSchedulerProvider()
     private var launchAppForAuthorization = mock<LaunchAppForAuthorization>()
@@ -59,6 +59,8 @@ class GrabIdPartnerTest {
     private val FAKE_DISCOVERY_URL = "fake_discovery_url"
     private val FAKE_AUTH_ENDPOINT = "fake_auth_endpoint"
     private val FAKE_TOKEN_ENDPOINT = "fake_token_endpoint"
+    private val FAKE_CLIENT_PUBLIC_INFO_ENDPOINT = "fake_client_public_info_endpoint {client_id}"
+    private val FAKE_CLIENT_PUBLIC_INFO_ENDPOINT_WITH_CLIENT_ID = "fake_client_public_info_endpoint fake_client_id"
     private val FAKE_ID_TOKEN_ENDPOINT = "fake_id_token_verification_endpoint"
     private val PARTNER_SCOPE = "scope"
     private val TEST_RESPONSE_TYPE = "code"
@@ -203,7 +205,7 @@ class GrabIdPartnerTest {
 
     @Test
     fun `verify login with no cache and empty authorization_endpoint`() {
-        prerequisiteToValidateCallDiscovery("", "", "")
+        prerequisiteToValidateCallDiscovery("", "", "", "")
 
         var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
@@ -212,7 +214,7 @@ class GrabIdPartnerTest {
 
     @Test
     fun `verify login with no cache and empty token_endpoint`() {
-        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, "", "")
+        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, "", "", "")
 
         var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
@@ -221,35 +223,57 @@ class GrabIdPartnerTest {
 
     @Test
     fun `verify login with no cache and empty id_token_verification_endpoint`() {
-        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, "")
+        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, "", FAKE_CLIENT_PUBLIC_INFO_ENDPOINT)
         var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
     }
 
     @Test
+    fun `verify callDiscovery updating the client_public_info_endpoint endpoint properly`() {
+        prerequisiteToValidateCallDiscovery(auth_endpoint = FAKE_AUTH_ENDPOINT, token_endpoint = FAKE_TOKEN_ENDPOINT, id_token_verification_endpoint = FAKE_ID_TOKEN_ENDPOINT, client_public_info_endpoint = FAKE_CLIENT_PUBLIC_INFO_ENDPOINT)
+        Assert.assertEquals(FAKE_CLIENT_PUBLIC_INFO_ENDPOINT_WITH_CLIENT_ID, grabAuthRepository.getClientInfoEndpointUrl())
+    }
+
+    @Test
+    fun `verify login with no cache and empty client_public_info_endpoint return the specific error`() {
+        loginSession.clientId = FAKE_CLIENT_ID
+        loginSession.redirectUri = FAKE_REDIRECT_URI
+        loginSession.scope = PARTNER_SCOPE
+        loginSession.serviceDiscoveryUrl = FAKE_DISCOVERY_URL
+        utility.setObjectToSharedPref(null)
+        grabAuthRepository.setCallDiscovery(Observable.just(DiscoveryResponse(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT, FAKE_CLIENT_PUBLIC_INFO_ENDPOINT)))
+        grabAuthRepository.setFetchClientPublicInfo(Observable.error(Throwable()))
+
+        grabIdPartner.login(loginSession, context, testLoginCallback)
+        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.CLIENTPUBLICINFO, GrabIdPartnerErrorCode.errorInClientPublicInfoEndpoint, "$CONST_READ_RESOURCE_STRING $CONST_READ_RESOURCE_STRING $FAKE_CLIENT_PUBLIC_INFO_ENDPOINT_WITH_CLIENT_ID", null)
+        Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
+        testLoginCallback.verifyOnSuccess(0)
+    }
+
+    @Test
     fun `verify login with no cache and discovery endpoints`() {
-        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT)
+        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT, FAKE_CLIENT_PUBLIC_INFO_ENDPOINT)
         verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(false))
     }
 
     @Test
     fun `verify login with with login_hint in the loginSession object`() {
-        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT, protocolInfo = ProtocolInfo("", "", ""), loginHint = LOGIN_HINT)
+        prerequisiteToValidateCallDiscovery(auth_endpoint = FAKE_AUTH_ENDPOINT, token_endpoint = FAKE_TOKEN_ENDPOINT, id_token_verification_endpoint = FAKE_ID_TOKEN_ENDPOINT, client_public_info_endpoint = FAKE_CLIENT_PUBLIC_INFO_ENDPOINT, protocolInfo = ProtocolInfo("", "", ""), loginHint = LOGIN_HINT)
         verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(false))
         verify(launchAppForAuthorization, times(0)).launchOAuthFlow(any(), any(), any(), eq(true))
     }
 
     @Test
     fun `verify login with with id_token_hint in the loginSession object`() {
-        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT, protocolInfo = ProtocolInfo("", "", ""), idTokenHint = ID_TOKEN_HINT)
+        prerequisiteToValidateCallDiscovery(auth_endpoint = FAKE_AUTH_ENDPOINT, token_endpoint = FAKE_TOKEN_ENDPOINT, id_token_verification_endpoint = FAKE_ID_TOKEN_ENDPOINT, client_public_info_endpoint = FAKE_CLIENT_PUBLIC_INFO_ENDPOINT, protocolInfo = ProtocolInfo("", "", ""), idTokenHint = ID_TOKEN_HINT)
         verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(false))
         verify(launchAppForAuthorization, times(0)).launchOAuthFlow(any(), any(), any(), eq(true))
     }
 
     @Test
     fun `verify login when there is a native app available`() {
-        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT, ProtocolInfo("", "", ""))
+        prerequisiteToValidateCallDiscovery(auth_endpoint = FAKE_AUTH_ENDPOINT, token_endpoint = FAKE_TOKEN_ENDPOINT, id_token_verification_endpoint = FAKE_ID_TOKEN_ENDPOINT, client_public_info_endpoint = FAKE_CLIENT_PUBLIC_INFO_ENDPOINT, protocolInfo = ProtocolInfo("", "", ""))
         verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(true))
         verify(launchAppForAuthorization, times(0)).launchOAuthFlow(any(), any(), any(), eq(false))
     }
@@ -464,7 +488,7 @@ class GrabIdPartnerTest {
         grabIdPartner.login(loginSession, context, testLoginCallback)
     }
 
-    private fun prerequisiteToValidateCallDiscovery(auth_endpoint: String, token_endpoint: String, id_token_verification_endpoint: String, protocolInfo: ProtocolInfo? = null, loginHint: String? = null, idTokenHint: String? = null) {
+    private fun prerequisiteToValidateCallDiscovery(auth_endpoint: String, token_endpoint: String, id_token_verification_endpoint: String, client_public_info_endpoint: String, protocolInfo: ProtocolInfo? = null, loginHint: String? = null, idTokenHint: String? = null) {
         loginSession.clientId = FAKE_CLIENT_ID
         loginSession.redirectUri = FAKE_REDIRECT_URI
         loginSession.scope = PARTNER_SCOPE
@@ -473,7 +497,7 @@ class GrabIdPartnerTest {
         loginSession.idTokenHint = idTokenHint
         utility.setObjectToSharedPref(null)
 
-        grabAuthRepository.setCallDiscovery(Observable.just(DiscoveryResponse(auth_endpoint, token_endpoint, id_token_verification_endpoint)))
+        grabAuthRepository.setCallDiscovery(Observable.just(DiscoveryResponse(auth_endpoint, token_endpoint, id_token_verification_endpoint, client_public_info_endpoint)))
         grabAuthRepository.setFetchClientPublicInfo(Observable.just(ClientPublicInfo(listOf(), "", "", "", "", "")))
         utility.setIsPackageInstalled(protocolInfo)
         whenever(context.packageManager).thenReturn(packageManager)
@@ -527,7 +551,7 @@ class TestLoginCallback : LoginCallback, ExchangeTokenCallback, LogoutCallback {
     }
 
     fun verifyOnError(expected: GrabIdPartnerError): Boolean {
-        return this.error != null && this.error?.localizeMessage.equals(expected.localizeMessage) &&
+        return this.error != null && this.error?.localizeMessage?.trim().equals(expected.localizeMessage?.trim()) &&
                 this.error?.code?.equals(expected.code) ?: false &&
                 this.error?.grabIdPartnerErrorDomain?.equals(expected.grabIdPartnerErrorDomain) ?: false
     }

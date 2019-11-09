@@ -137,7 +137,7 @@ class StubUtility : IUtility {
     override fun clearLoginSession(loginSession: LoginSession) {
     }
 
-    override fun isPackageInstalled(protocols: List<String>, packageManager: PackageManager): Maybe<ProtocolInfo> {
+    override fun isPackageInstalled(protocols: List<String>?, packageManager: PackageManager): Maybe<ProtocolInfo> {
         if (protocolInfo == null)
             return Maybe.empty()
 

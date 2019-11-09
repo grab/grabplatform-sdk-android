@@ -17,6 +17,7 @@ internal class StubGrabAuthRepository : GrabAuthRepository {
     private lateinit var tokenAPIResponse: Observable<TokenAPIResponse>
     private lateinit var idTokenInfo: Observable<IdTokenInfo>
     private lateinit var clientPublicInfo: Observable<ClientPublicInfo>
+    private lateinit var clientPublicEndpoint: String
 
     override fun callDiscovery(discoveryEndpoint: String): Observable<DiscoveryResponse> {
         return discoveryResponse
@@ -27,7 +28,12 @@ internal class StubGrabAuthRepository : GrabAuthRepository {
     }
 
     override fun fetchClientPublicInfo(clientPublicEndpoint: String): Observable<ClientPublicInfo> {
+        this.clientPublicEndpoint = clientPublicEndpoint
         return clientPublicInfo
+    }
+
+    fun getClientInfoEndpointUrl(): String {
+        return this.clientPublicEndpoint
     }
 
     fun setFetchClientPublicInfo(clientPublicInfo: Observable<ClientPublicInfo>) {
