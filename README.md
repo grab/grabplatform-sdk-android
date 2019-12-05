@@ -138,6 +138,9 @@ Partner application can logout using the logout API. Currently logout removes ca
 GrabIdPartner.instance.logout(loginSession, this::clearGrabSignInSessionCallback)
 ```
 
+### Analytics
+GrabID Partner SDK does not send any analytic data due to user privacy. Third-party is responsible for their own analytics to troubleshoot error and analytics data to address their analytics requirements.
+
 ## GrabId Partner SDK API
 
 ### LoginSession
