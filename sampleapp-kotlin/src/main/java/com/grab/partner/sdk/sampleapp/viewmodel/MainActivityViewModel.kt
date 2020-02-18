@@ -9,8 +9,8 @@
 package com.grab.partner.sdk.sampleapp.viewmodel
 
 import android.content.Context
-import android.databinding.ObservableField
-import android.databinding.ObservableInt
+import androidx.databinding.ObservableField
+import androidx.databinding.ObservableInt
 import android.text.method.ScrollingMovementMethod
 import android.view.View
 import com.grab.partner.sdk.ExchangeTokenCallback
@@ -152,7 +152,7 @@ class MainActivityViewModel(var context: Context,
                     stringMessage.set(printUserInfoAPIResponse(result))
                 }, { error ->
                     if (error is HttpException) {
-                        val errorJsonString = error.response().errorBody()?.string()
+                        val errorJsonString = error.response()?.errorBody()?.string()
                         stringMessage.set(context.resources.getString(R.string.error_accessing_protected_resource)  + " Error: $errorJsonString")
                     }
                     stringMessage.set(context.resources.getString(R.string.error_accessing_protected_resource) + error.localizedMessage)

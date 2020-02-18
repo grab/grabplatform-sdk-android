@@ -22,14 +22,6 @@ import javax.net.ssl.SSLSocketFactory
 
 internal class TLSSocketFactory @Throws(KeyManagementException::class, NoSuchAlgorithmException::class)
 constructor() : SSLSocketFactory(), Parcelable {
-    override fun getDefaultCipherSuites(): Array<String> {
-        return delegate.defaultCipherSuites
-    }
-
-    override fun getSupportedCipherSuites(): Array<String> {
-        return delegate.supportedCipherSuites
-    }
-
     private val delegate: SSLSocketFactory
 
     constructor(parcel: Parcel) : this()
@@ -38,6 +30,14 @@ constructor() : SSLSocketFactory(), Parcelable {
         val context = SSLContext.getInstance("TLS")
         context.init(null, null, null)
         delegate = context.socketFactory
+    }
+
+    override fun getDefaultCipherSuites(): Array<String> {
+        return delegate.defaultCipherSuites
+    }
+
+    override fun getSupportedCipherSuites(): Array<String> {
+        return delegate.supportedCipherSuites
     }
 
     @Throws(IOException::class)

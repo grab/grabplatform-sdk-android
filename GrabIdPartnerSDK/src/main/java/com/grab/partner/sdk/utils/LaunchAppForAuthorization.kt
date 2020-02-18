@@ -13,11 +13,10 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.support.customtabs.CustomTabsClient
-import android.support.customtabs.CustomTabsIntent
-import android.support.customtabs.CustomTabsServiceConnection
-import android.support.customtabs.CustomTabsSession
-import android.util.Log
+import androidx.browser.customtabs.CustomTabsClient
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.browser.customtabs.CustomTabsServiceConnection
+import androidx.browser.customtabs.CustomTabsSession
 import com.grab.partner.sdk.GrabIdPartner.Companion.CODE_CHALLENGE_METHOD
 import com.grab.partner.sdk.GrabIdPartner.Companion.RESPONSE_TYPE
 import com.grab.partner.sdk.LoginCallback
@@ -43,7 +42,7 @@ internal class LaunchAppForAuthorizationImpl : LaunchAppForAuthorization {
     // Chrome Custom Tab variables
     private var mClient: CustomTabsClient? = null
     private var mCustomTabsSession: CustomTabsSession? = null
-    private var mCustomTabsServiceConnection: CustomTabsServiceConnection? = null
+    private lateinit var mCustomTabsServiceConnection: CustomTabsServiceConnection
     private lateinit var customTabsIntent: CustomTabsIntent
     private val CUSTOM_TAB_PACKAGE_NAME = "com.android.chrome"
 

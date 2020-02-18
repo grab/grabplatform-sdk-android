@@ -14,6 +14,7 @@ import com.grab.partner.sdk.models.LoginSession
 
 interface GrabIdPartnerProtocol {
     fun initialize(context: Context)
+    fun initialize(context: Context, callback: InitializeCallback? = null)
     fun loadLoginSession(callback: LoginSessionCallback)
     fun login(loginSession: LoginSession, context: Context, callback: LoginCallback)
     fun login(loginSession: LoginSession, context: Context, callback: LoginCallbackV2)

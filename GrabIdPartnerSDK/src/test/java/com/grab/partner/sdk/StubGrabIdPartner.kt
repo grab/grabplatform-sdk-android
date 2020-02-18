@@ -29,6 +29,10 @@ internal open class StubGrabIdPartner : GrabIdPartnerProtocol {
         sdkInitialized = true
     }
 
+    override fun initialize(context: Context, callback: InitializeCallback?) {
+        sdkInitialized = true
+    }
+
     override fun loadLoginSession(callback: LoginSessionCallback) {
         if (callbackStatus) {
             callback.onError(settableError)

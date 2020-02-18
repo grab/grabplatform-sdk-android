@@ -12,7 +12,6 @@ import dagger.Provides
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Singleton
 
-@Singleton
 @Module
 class WrapperModule {
 

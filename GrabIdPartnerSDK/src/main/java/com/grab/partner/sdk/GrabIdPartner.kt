@@ -12,7 +12,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
 import com.grab.partner.sdk.R.string.ERROR_FETCHING_CLIENT_PUBLIC_INFO_URL
 import com.grab.partner.sdk.R.string.ERROR_MISSING_ACCESS_TOKEN
 import com.grab.partner.sdk.R.string.ERROR_MISSING_ACCESS_TOKEN_EXPIRY
@@ -100,27 +99,36 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
     }
 
     override fun initialize(context: Context) {
+        initialize(context, null)
+    }
+
+    override fun initialize(context: Context, callback: InitializeCallback?) {
         if (isSdkInitialized) {
             return
         }
         // Get the global application context of the current app.
         applicationContext = context.applicationContext
-        // create Android keystore and Cipher classes
-        applicationContext?.let {
-            androidKeyStoreWrapper = AndroidKeyStoreWrapper(it)
-        } ?: return
+        try {
+            // create Android keystore and Cipher classes
+            applicationContext?.let {
+                androidKeyStoreWrapper = AndroidKeyStoreWrapper(it)
+            } ?: return
 
-        cipherWrapper = CipherWrapper()
-        // Dependency injection
-        val component = DaggerMainComponent
-                .builder()
-                .appModule(AppModule(context))
-                .build()
+            cipherWrapper = CipherWrapper()
+            // Dependency injection
+            val component = DaggerMainComponent
+                    .builder()
+                    .appModule(AppModule(context))
+                    .build()
 
-        component.inject(this)
-        compositeDisposable = CompositeDisposable()
-        launchAppForAuthorization.speedUpChromeTabs()
-        isSdkInitialized = true
+            component.inject(this)
+            compositeDisposable = CompositeDisposable()
+            launchAppForAuthorization.speedUpChromeTabs()
+            isSdkInitialized = true
+            callback?.onSuccess()
+        } catch (exception: Exception) {
+            callback?.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.INITIALIZE, GrabIdPartnerErrorCode.errorInInitialize, exception.localizedMessage, null))
+        }
     }
 
     /**
@@ -171,12 +179,16 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
             loginSession.scope = scope
         }
 
-        loginSession.acrValues = utility.getPartnerInfo(applicationContext, PARTNER_ACR_VALUES_ATTRIBUTE) ?: ""
-        loginSession.request = utility.getPartnerInfo(applicationContext, PARTNER_REQUEST_VALUES_ATTRIBUTE) ?: ""
-        loginSession.loginHint = utility.getPartnerInfo(applicationContext, PARTNER_LOGINHINT_VALUES_ATTRIBUTE) ?: ""
+        loginSession.acrValues = utility.getPartnerInfo(applicationContext, PARTNER_ACR_VALUES_ATTRIBUTE)
+                ?: ""
+        loginSession.request = utility.getPartnerInfo(applicationContext, PARTNER_REQUEST_VALUES_ATTRIBUTE)
+                ?: ""
+        loginSession.loginHint = utility.getPartnerInfo(applicationContext, PARTNER_LOGINHINT_VALUES_ATTRIBUTE)
+                ?: ""
         loginSession.idTokenHint = utility.getPartnerInfo(applicationContext, PARTNER_IDTOKENHINT_VALUES_ATTRIBUTE)
                 ?: ""
-        loginSession.prompt = utility.getPartnerInfo(applicationContext, PARTNER_PROMPT_VALUE_ATTRIBUTE) ?: ""
+        loginSession.prompt = utility.getPartnerInfo(applicationContext, PARTNER_PROMPT_VALUE_ATTRIBUTE)
+                ?: ""
 
         callback.onSuccess(loginSession)
     }
@@ -378,7 +390,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                 }, { error ->
                     var errorJsonString = ""
                     if (error is HttpException) {
-                        errorJsonString = error.response().errorBody()?.string()
+                        errorJsonString = error.response()?.errorBody()?.string()
                                 ?: UNKNOWN_HTTP_EXCEPTION
                     }
                     callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.network, errorJsonString, error))
@@ -479,7 +491,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                                     .subscribe({}, { error ->
                                         var errorJsonString = ""
                                         if (error is HttpException) {
-                                            errorJsonString = error.response().errorBody()?.string()
+                                            errorJsonString = error.response()?.errorBody()?.string()
                                                     ?: UNKNOWN_HTTP_EXCEPTION
                                         }
                                         callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.GETIDTOKENINFO, GrabIdPartnerErrorCode.errorInGetIdTokenInfo, errorJsonString, error))
@@ -646,7 +658,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                                 }, onError = {
                                     // if we face any error then launch Chrome browser flow
                                     launchAppForAuthorization.launchOAuthFlow(context, loginSession, callback)
-                                    LogUtils.debug("callDiscovery", it.localizedMessage)
+                                    LogUtils.debug("callDiscovery", it.localizedMessage ?: "")
                                 }, onComplete = {
                                     // if we're here means we haven't find the required native app so will launch the Chrome browser flow
                                     launchAppForAuthorization.launchOAuthFlow(context, loginSession, callback)
@@ -656,7 +668,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                 }, { error ->
                     var errorJsonString = ""
                     if (error is HttpException) {
-                        errorJsonString = error.response().errorBody()?.string()
+                        errorJsonString = error.response()?.errorBody()?.string()
                                 ?: UNKNOWN_HTTP_EXCEPTION
                     }
                     if (error is CustomInternalError) {
@@ -797,6 +809,11 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
  * Throwable error that can be used inside sdk, internal to sdk only not to be used as final error type to send to sdk consumer
  */
 class CustomInternalError(var domain: GrabIdPartnerErrorDomain, var code: GrabIdPartnerErrorCode, var extraMessage: String = "", cause: Throwable) : Throwable(cause)
+
+interface InitializeCallback {
+    fun onSuccess()
+    fun onError(grabIdPartnerError: GrabIdPartnerError)
+}
 
 interface LoginSessionCallback {
     fun onSuccess(loginSession: LoginSession)

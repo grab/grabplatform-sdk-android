@@ -7,24 +7,30 @@
  */
 
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'kotlin-android-extensions'
 apply plugin: 'org.jetbrains.dokka-android'
+apply from: '../dependencies.gradle'
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion "28.0.3"
+    compileSdkVersion appCompileSdkVersion
+    buildToolsVersion buildToolsVersion
 
 
     defaultConfig {
-        minSdkVersion 19
-        targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
+        minSdkVersion minSdkSupportedVersion
+        targetSdkVersion maxSdkSupportedVersion
+        versionCode appVersion
+        versionName appVersionName
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     buildTypes {
@@ -50,7 +56,7 @@ ext {
     gitUrl = 'https://github.com/grab/grabidpartnersdk-android.git'
     githubRepository= 'grab/grabplatform-sdk-android'
 
-    libraryVersion = '1.1.1' // Current version of .aar in JCenter
+    libraryVersion = sdkVersion // Current version of .aar in JCenter
 
     licenseName = 'The MIT License'
     licenseUrl = 'https://opensource.org/licenses/MIT'
@@ -59,41 +65,36 @@ ext {
 
     dependencies {
         implementation fileTree(dir: 'libs', include: ['*.jar'])
-        implementation 'com.android.support:appcompat-v7:28.0.0'
-        testImplementation 'junit:junit:4.12'
-        androidTestImplementation 'com.android.support.test:runner:1.0.2'
-        androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+        implementation appcompat
+        implementation preferenceLibrary
 
         // Kotlin
-        implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+        implementation kotlin
 
         // Dagger 2
-        implementation 'com.google.dagger:dagger:2.11'
-        kapt 'com.google.dagger:dagger-compiler:2.11'
-        compileOnly 'org.glassfish:javax.annotation:10.0-b28'
+        implementation dagger
+        kapt daggercompiler
 
         // retrofit
-        implementation "com.squareup.retrofit2:retrofit:2.3.0"
-        implementation "com.squareup.retrofit2:adapter-rxjava2:2.3.0"
-        implementation "com.squareup.retrofit2:converter-gson:2.3.0"
+        implementation retrofit
+        implementation retrofitrx
+        implementation convertergson
 
         // rxandroid
-        implementation "io.reactivex.rxjava2:rxandroid:2.0.1"
-        implementation "io.reactivex.rxjava2:rxkotlin:2.4.0"
+        implementation rxandroid
+        implementation rxkotlin
 
         // Chrome custom tab
-        implementation "com.android.support:customtabs:28.0.0"
+        implementation chromecustomtab
 
         //Logging Interceptor
-        implementation 'com.squareup.okhttp3:logging-interceptor:3.11.0'
+        implementation okhttplogging
 
-        // mockito
-        testImplementation 'org.mockito:mockito-core:2.21.0'
-        testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.0.0-RC2"
-
-        // PowerMock
-        testImplementation "org.powermock:powermock-module-junit4:1.6.4"
-        testImplementation "org.powermock:powermock-api-mockito2:2.0.0-beta.5"
+        // unit tests
+        testImplementation junit
+        testImplementation powermock
+        testImplementation powermockapi
+        testImplementation mockitokotlin
     }
 
 //gradle files to publish the .aar to Bintray
