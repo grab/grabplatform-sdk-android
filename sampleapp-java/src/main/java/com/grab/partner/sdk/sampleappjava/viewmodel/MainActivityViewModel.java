@@ -9,8 +9,8 @@
 package com.grab.partner.sdk.sampleappjava.viewmodel;
 
 import android.content.Context;
-import android.databinding.ObservableField;
-import android.databinding.ObservableInt;
+import androidx.databinding.ObservableField;
+import androidx.databinding.ObservableInt;
 import android.text.method.ScrollingMovementMethod;
 
 import android.view.View;

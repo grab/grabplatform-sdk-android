@@ -1,0 +1,73 @@
+ext {
+    kotlin_version = '1.3.40'
+    gradle_version = '3.5.3'
+    gradle_bintray_plugin_version = '1.7.3'
+    android_maven_gradle_plugin_version = '1.5'
+    rxkotlin_version = '2.4.0'
+    minSdkSupportedVersion = 19
+    maxSdkSupportedVersion = 29
+    appCompileSdkVersion = 29
+    buildToolsVersion = "28.0.3"
+    appApplicationId = "com.blockchain"
+    appVersion = 1
+    appVersionName = "1.0"
+    sdkVersion = '1.1.1' // Current version of .aar in JCenter
+    appcompat_version = '1.1.0'
+    corektx_version = '1.1.0-alpha04'
+    preference_version =  '1.1.0'
+    constraintlayout_version = '1.1.3'
+    junit = 'junit:4.12'
+    testrunner = '1.1.0-alpha4'
+    espresso = '3.3.0-alpha02'
+    mockito_kotlin_version = '2.1.0'
+    retrofit_version = '2.7.1'
+    okhttplogging_version = '3.11.0'
+    dagger_version = '2.18'
+    room_version = '1.1.0'
+    room_rx_version = '2.1.0'
+    gson_version = '2.8.5'
+    graphview_version = '4.2.2'
+    mpandroidchart_version = 'v3.1.0-alpha'
+    rxandroid = '2.1.1'
+    mockito_inline_version = '2.8.9'
+    test_runner_version = '1.0.2'
+    leakcanary_version = '2.0-beta-3'
+    chrome_custom_tab_version = '1.2.0'
+    powermock_version = '1.6.4'
+    powermock_api_version = '2.0.0-beta.5'
+
+    kotlin = "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    // android
+    appcompat = "androidx.appcompat:appcompat:$appcompat_version"
+    corektx = "androidx.core:core-ktx:$appcompat_version"
+    constraintlayout = "androidx.constraintlayout:constraintlayout:$constraintlayout_version"
+    preferenceLibrary = "androidx.preference:preference-ktx:$preference_version"
+    // unit test
+    junit = "junit:$junit"
+    testrunner = "com.android.support.test:runner:$test_runner_version"
+    mockitokotlin = "com.nhaarman.mockitokotlin2:mockito-kotlin:$mockito_kotlin_version"
+    mockitoinline = "org.mockito:mockito-inline:$mockito_inline_version"
+    powermock = "org.powermock:powermock-module-junit4:$powermock_version"
+    powermockapi = "org.powermock:powermock-api-mockito2:$powermock_api_version"
+    // retrofit
+    retrofit = "com.squareup.retrofit2:retrofit:$retrofit_version"
+    retrofitrx = "com.squareup.retrofit2:adapter-rxjava2:$retrofit_version"
+    convertergson = "com.squareup.retrofit2:converter-gson:$retrofit_version"
+    okhttplogging = "com.squareup.okhttp3:logging-interceptor:$okhttplogging_version"
+    // rxkotlin
+    rxkotlin = "io.reactivex.rxjava2:rxkotlin:$rxkotlin_version"
+    // rxandroid
+    rxandroid = "io.reactivex.rxjava2:rxandroid:$rxandroid"
+    // Chrome custom tab
+    chromecustomtab = "androidx.browser:browser:$chrome_custom_tab_version"
+    // Dagger 2
+    dagger = "com.google.dagger:dagger:$dagger_version"
+    daggerandroid = "com.google.dagger:dagger-android:$dagger_version"
+    daggerandroidsupport = "com.google.dagger:dagger-android-support:$dagger_version"
+    daggercompiler = "com.google.dagger:dagger-compiler:$dagger_version"
+    daggerandroidprocessor = "com.google.dagger:dagger-android-processor:$dagger_version"
+    // GSON
+    gson = "com.google.code.gson:gson:$gson_version"
+    // leakcanary
+    leakcanary = "com.squareup.leakcanary:leakcanary-android:$leakcanary_version"
+}

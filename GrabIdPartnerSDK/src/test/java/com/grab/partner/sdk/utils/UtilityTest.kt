@@ -80,7 +80,7 @@ class UtilityTest {
     }
 
     private fun createPackageInfo(packageName: String, versionName: String): PackageInfo {
-        var packageInfo = PackageInfo()
+        var packageInfo = mock<PackageInfo>()
         packageInfo.packageName = packageName
         packageInfo.versionName = versionName
         return packageInfo

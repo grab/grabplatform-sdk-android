@@ -353,13 +353,14 @@ internal class Utility : IUtility {
 
         if (protocols != null) {
             for (customProtocol in protocols) {
-                var protocolInfo = gson.fromJson(customProtocol, ProtocolInfo::class.java)
-                // if any of the required parameters are missing then no need to proceed
-                if (protocolInfo.minversion_adr.isNullOrEmpty() || protocolInfo.package_adr.isNullOrEmpty() || protocolInfo.protocol_adr.isNullOrEmpty()) {
-                    continue
-                }
                 // check if the package is installed
                 try {
+                    var protocolInfo = gson.fromJson(customProtocol, ProtocolInfo::class.java)
+                    // if any of the required parameters are missing then no need to proceed
+                    if (protocolInfo.minversion_adr.isNullOrEmpty() || protocolInfo.package_adr.isNullOrEmpty() || protocolInfo.protocol_adr.isNullOrEmpty()) {
+                        continue
+                    }
+
                     var packageInfo = packageManager.getPackageInfo(protocolInfo.package_adr, 0)
                     if (packageInfo != null) {
                         var installedAppVersion = Version(packageInfo.versionName)

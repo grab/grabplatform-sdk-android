@@ -38,7 +38,8 @@ enum class GrabIdPartnerErrorCode {
     invalidNonce,                   // The nonce is invalid
     invalidResponse,                // Unexpected response from GrabId service
     errorInLogout,                  // Error in logout operation
-    errorInTearDown,                 // Error in teardown
+    errorInInitialize,              // Error in initialize
+    errorInTearDown,                // Error in teardown
     errorLaunchingChromeCustomTab   // Error launching oauth flow using Chrome custom tab
 }
 
@@ -65,6 +66,7 @@ enum class GrabIdPartnerErrorDomain {
     EXCHANGETOKEN,
     GETIDTOKENINFO,
     LOGOUT,
+    INITIALIZE,
     TEARDOWN,
     PROTECTED_RESOURCES,
     UNKNOWN

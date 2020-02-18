@@ -19,8 +19,14 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
+import java.security.KeyStore
+import java.security.KeyStoreException
+import java.security.NoSuchAlgorithmException
+import java.util.Arrays
 import java.util.Date
 import javax.inject.Singleton
+import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509TrustManager
 
 @Module
 internal class NetworkModule {
@@ -56,7 +62,7 @@ internal class NetworkModule {
     fun provideOkHttpClient(httpLoggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
         return OkHttpClient
                 .Builder()
-                .sslSocketFactory(TLSSocketFactory())
+                .sslSocketFactory(TLSSocketFactory(), getTrustManager())
                 .addInterceptor(httpLoggingInterceptor)
                 .build()
     }
@@ -71,5 +77,27 @@ internal class NetworkModule {
             interceptor.level = HttpLoggingInterceptor.Level.NONE
 
         return interceptor
+    }
+}
+
+internal fun getTrustManager(): X509TrustManager {
+    try {
+        val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+        trustManagerFactory.run {
+            trustManagerFactory.init(null as KeyStore?)
+            val trustManagers = trustManagerFactory.trustManagers ?: null
+            if (trustManagers == null || trustManagers.isEmpty()) throw IllegalArgumentException("trustManagers is empty")
+            for (trustManager in trustManagers) {
+                if (trustManager is X509TrustManager) {
+                    return trustManager
+                }
+            }
+
+            throw IllegalArgumentException("X509TrustManager not found")
+        }
+    } catch (e: NoSuchAlgorithmException) {
+        throw e
+    } catch (e: KeyStoreException) {
+        throw e
     }
 }

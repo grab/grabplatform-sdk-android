@@ -10,7 +10,7 @@ package com.grab.partner.sdk.di.modules
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 import com.grab.partner.sdk.keystore.AndroidKeyStoreWrapper
 import com.grab.partner.sdk.keystore.CipherWrapper
 import com.grab.partner.sdk.keystore.IAndroidKeyStoreWrapper
