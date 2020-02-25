@@ -8,6 +8,7 @@
 
 package com.grab.partner.sdk.utils
 
+import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -143,7 +144,10 @@ internal class LaunchAppForAuthorizationImpl : LaunchAppForAuthorization {
                     .build()
 
             customTabsIntent.intent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY
-            customTabsIntent.intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            // if user is using the old login api and sending the application context then we have to add this FLAG_ACTIVITY_NEW_TASK flag
+            if (context is Application) {
+                customTabsIntent.intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
             customTabsIntent.launchUrl(context, uri)
         }
         callback.onSuccess()

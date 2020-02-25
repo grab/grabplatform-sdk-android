@@ -12,11 +12,12 @@ import android.content.Intent
 import androidx.databinding.DataBindingUtil
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.grab.partner.sdk.sampleapp.MainApplication
 import com.grab.partner.sdk.sampleapp.databinding.ActivityMainBinding
 import com.grab.partner.sdk.sampleapp.viewmodel.MainActivityViewModel
 import javax.inject.Inject
 import com.grab.partner.sdk.sampleapp.R
+import com.grab.partner.sdk.sampleapp.di.components.DaggerSampleAppComponent
+import com.grab.partner.sdk.sampleapp.di.modules.SampleAppModule
 
 class MainActivity : AppCompatActivity() {
     @Inject
@@ -26,7 +27,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-        (application as MainApplication).component.inject(this)
+        setUpDI()
         binding.vm = mainActivityViewModel
     }
 
@@ -39,5 +40,12 @@ class MainActivity : AppCompatActivity() {
             // initiate the token exchange with GRAB ID Partner SDK
             mainActivityViewModel.getToken()
         }
+    }
+
+    private fun setUpDI() {
+        val component = DaggerSampleAppComponent.builder()
+                .sampleAppModule(SampleAppModule(this))
+                .build()
+        component.inject(this)
     }
 }

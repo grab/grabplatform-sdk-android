@@ -8,7 +8,7 @@
 
 package com.grab.partner.sdk.sampleapp.di.modules
 
-import android.app.Application
+import android.app.Activity
 import android.content.Context
 import com.grab.partner.sdk.sampleapp.api.GrabRepository
 import com.grab.partner.sdk.sampleapp.scheduleprovider.SchedulerProvider
@@ -18,10 +18,10 @@ import dagger.Provides
 import javax.inject.Singleton
 
 @Module
-class SampleAppModule(private val app: Application) {
+class SampleAppModule(private val activity: Activity) {
     @Provides
     @Singleton
-    fun provideContext(): Context = app
+    fun provideContext(): Context = activity
 
     @Provides
     @Singleton
@@ -29,5 +29,5 @@ class SampleAppModule(private val app: Application) {
 
     @Provides
     @Singleton
-    fun provideViewModel(context: Context, grabRepository: GrabRepository, schedulerProvider: SchedulerProvider): MainActivityViewModel = MainActivityViewModel(context, grabRepository, schedulerProvider)
+    fun provideViewModel(grabRepository: GrabRepository, schedulerProvider: SchedulerProvider): MainActivityViewModel = MainActivityViewModel(activity, grabRepository, schedulerProvider)
 }

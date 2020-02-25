@@ -8,6 +8,7 @@
 
 package com.grab.partner.sdk
 
+import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -37,22 +38,24 @@ import java.util.UUID
 @RunWith(PowerMockRunner::class)
 @PrepareForTest(Base64::class, LoginSession::class, Utility::class, KeyStore::class, Log::class, CompositeDisposable::class)
 class GrabIdPartnerTest {
-    private var grabIdPartner = GrabIdPartner.instance as GrabIdPartner
-    private var loginSessionCallback = TestLoginSessionCallback()
-    private var testLoginCallback = TestLoginCallback()
-    private var testGetIdTokenInfoCallback = TestGetIdTokenInfoCallback()
-    private var loginSession = LoginSession()
-    private var utility = StubUtility()
-    private var context: Context = mock(Context::class.java)
-    private var sharedPreferences = mock(SharedPreferences::class.java)
-    private var packageManager = mock(PackageManager::class.java)
-    private var grabAuthRepository = StubGrabAuthRepository()
-    private var scheduleProvider = TestSchedulerProvider()
-    private var launchAppForAuthorization = mock<LaunchAppForAuthorization>()
-    private var keyPair = PowerMockito.mock(KeyPair::class.java)
-    private var androidKeyStoreWrapper = StubAndroidKeyStoreWrapper(keyPair)
-    private var cipherWrapper = StubCipherWrapper()
-    private var compositeDisposable: CompositeDisposable = mock(CompositeDisposable::class.java)
+    private val grabIdPartner = GrabIdPartner.instance as GrabIdPartner
+    private val loginSessionCallback = TestLoginSessionCallback()
+    private val testLoginCallback = TestLoginCallback()
+    private val testLoginCallbackV2 = TestLoginCallbackV2()
+    private val testGetIdTokenInfoCallback = TestGetIdTokenInfoCallback()
+    private val loginSession = LoginSession()
+    private val utility = StubUtility()
+    private val context: Context = mock(Context::class.java)
+    private val activity: Activity = mock()
+    private val sharedPreferences = mock(SharedPreferences::class.java)
+    private val packageManager = mock(PackageManager::class.java)
+    private val grabAuthRepository = StubGrabAuthRepository()
+    private val scheduleProvider = TestSchedulerProvider()
+    private val launchAppForAuthorization = mock<LaunchAppForAuthorization>()
+    private val keyPair = PowerMockito.mock(KeyPair::class.java)
+    private val androidKeyStoreWrapper = StubAndroidKeyStoreWrapper(keyPair)
+    private val cipherWrapper = StubCipherWrapper()
+    private val compositeDisposable: CompositeDisposable = mock(CompositeDisposable::class.java)
 
     private val FAKE_CLIENT_ID = "fake_client_id"
     private val FAKE_REDIRECT_URI = "fake_redirectUri"
@@ -92,63 +95,63 @@ class GrabIdPartnerTest {
         GrabIdPartner.isSdkInitialized = false
         grabIdPartner.loadLoginSession(loginSessionCallback)
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.sdkNotInitialized, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.sdkNotInitialized, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
     }
 
     @Test
     fun `verify loadLoginSession with null clientId`() {
         prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(null, null, null, null)
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidClientId, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidClientId, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
     }
 
     @Test
     fun `verify loadLoginSession with empty clientId`() {
         prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo("", null, null, null)
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidClientId, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidClientId, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
     }
 
     @Test
     fun `verify loadLoginSession with null redirectUri`() {
         prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(FAKE_CLIENT_ID, null, null, null)
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidRedirectURI, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidRedirectURI, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
     }
 
     @Test
     fun `verify loadLoginSession with empty redirectUri`() {
         prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(FAKE_CLIENT_ID, "", null, null)
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidRedirectURI, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidRedirectURI, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
     }
 
     @Test
     fun `verify loadLoginSession with null serviceDiscoveryUrl`() {
         prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(FAKE_CLIENT_ID, FAKE_REDIRECT_URI, null, null)
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
     }
 
     @Test
     fun `verify loadLoginSession with empty serviceDiscoveryUrl`() {
         prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(FAKE_CLIENT_ID, FAKE_REDIRECT_URI, "", null)
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
     }
 
     @Test
     fun `verify loadLoginSession with null scope`() {
         prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(FAKE_CLIENT_ID, FAKE_REDIRECT_URI, FAKE_DISCOVERY_URL, null)
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidPartnerScope, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidPartnerScope, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
     }
 
     @Test
     fun `verify loadLoginSession with empty scope`() {
         prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(FAKE_CLIENT_ID, FAKE_REDIRECT_URI, FAKE_DISCOVERY_URL, "")
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidPartnerScope, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidPartnerScope, CONST_READ_RESOURCE_STRING, null)
         loginSessionCallback.verifyOnSuccess(0)
         Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
     }
@@ -170,36 +173,73 @@ class GrabIdPartnerTest {
     fun `verify login with empty client id`() {
         prerequisiteToValidateLogin("", "", "", "")
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidClientId, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidClientId, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
+    }
+
+    @Test
+    fun `verify loginV2 with empty client id`() {
+        prerequisiteToValidateLogin("", "", "", "", true)
+
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidClientId, CONST_READ_RESOURCE_STRING, null)
+        Assert.assertTrue(testLoginCallbackV2.verifyOnError(grabIdPartnerError))
+        testLoginCallbackV2.verifyOnSuccess(0)
     }
 
     @Test
     fun `verify login with empty redirectUri`() {
         prerequisiteToValidateLogin(FAKE_CLIENT_ID, "", "", "")
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidRedirectURI, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidRedirectURI, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
+    }
+
+    @Test
+    fun `verify loginV2 with empty redirectUri`() {
+        prerequisiteToValidateLogin(FAKE_CLIENT_ID, "", "", "", true)
+
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidRedirectURI, CONST_READ_RESOURCE_STRING, null)
+        Assert.assertTrue(testLoginCallbackV2.verifyOnError(grabIdPartnerError))
+        testLoginCallbackV2.verifyOnSuccess(0)
     }
 
     @Test
     fun `verify login with empty scope`() {
         prerequisiteToValidateLogin(FAKE_CLIENT_ID, FAKE_REDIRECT_URI, "", "")
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidPartnerScope, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidPartnerScope, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
+    }
+
+    @Test
+    fun `verify loginV2 with empty scope`() {
+        prerequisiteToValidateLogin(FAKE_CLIENT_ID, FAKE_REDIRECT_URI, "", "", true)
+
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidPartnerScope, CONST_READ_RESOURCE_STRING, null)
+        Assert.assertTrue(testLoginCallbackV2.verifyOnError(grabIdPartnerError))
+        testLoginCallbackV2.verifyOnSuccess(0)
     }
 
     @Test
     fun `verify login with empty serviceDiscoveryUrl`() {
         prerequisiteToValidateLogin(FAKE_CLIENT_ID, FAKE_REDIRECT_URI, PARTNER_SCOPE, "")
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
+
+    }
+
+    @Test
+    fun `verify loginV2 with empty serviceDiscoveryUrl`() {
+        prerequisiteToValidateLogin(FAKE_CLIENT_ID, FAKE_REDIRECT_URI, PARTNER_SCOPE, "", true)
+
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOGIN, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
+        Assert.assertTrue(testLoginCallbackV2.verifyOnError(grabIdPartnerError))
+        testLoginCallbackV2.verifyOnSuccess(0)
 
     }
 
@@ -207,31 +247,63 @@ class GrabIdPartnerTest {
     fun `verify login with no cache and empty authorization_endpoint`() {
         prerequisiteToValidateCallDiscovery("", "", "", "")
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
+    }
+
+    @Test
+    fun `verify loginV2 with no cache and empty authorization_endpoint`() {
+        prerequisiteToValidateCallDiscovery("", "", "", "", isV2Api = true)
+
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
+        Assert.assertTrue(testLoginCallbackV2.verifyOnError(grabIdPartnerError))
+        testLoginCallbackV2.verifyOnSuccess(0)
     }
 
     @Test
     fun `verify login with no cache and empty token_endpoint`() {
         prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, "", "", "")
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
+    }
+
+    @Test
+    fun `verify loginV2 with no cache and empty token_endpoint`() {
+        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, "", "", "", isV2Api = true)
+
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
+        Assert.assertTrue(testLoginCallbackV2.verifyOnError(grabIdPartnerError))
+        testLoginCallbackV2.verifyOnSuccess(0)
     }
 
     @Test
     fun `verify login with no cache and empty id_token_verification_endpoint`() {
         prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, "", FAKE_CLIENT_PUBLIC_INFO_ENDPOINT)
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
     }
 
     @Test
+    fun `verify loginV2 with no cache and empty id_token_verification_endpoint`() {
+        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, "", FAKE_CLIENT_PUBLIC_INFO_ENDPOINT, isV2Api = true)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
+        Assert.assertTrue(testLoginCallbackV2.verifyOnError(grabIdPartnerError))
+        testLoginCallbackV2.verifyOnSuccess(0)
+    }
+
+    @Test
     fun `verify callDiscovery updating the client_public_info_endpoint endpoint properly`() {
         prerequisiteToValidateCallDiscovery(auth_endpoint = FAKE_AUTH_ENDPOINT, token_endpoint = FAKE_TOKEN_ENDPOINT, id_token_verification_endpoint = FAKE_ID_TOKEN_ENDPOINT, client_public_info_endpoint = FAKE_CLIENT_PUBLIC_INFO_ENDPOINT)
+        Assert.assertEquals(FAKE_CLIENT_PUBLIC_INFO_ENDPOINT_WITH_CLIENT_ID, grabAuthRepository.getClientInfoEndpointUrl())
+    }
+
+    @Test
+    fun `verify callDiscovery updating the client_public_info_endpoint endpoint properly using the loginV2 api`() {
+        prerequisiteToValidateCallDiscovery(auth_endpoint = FAKE_AUTH_ENDPOINT, token_endpoint = FAKE_TOKEN_ENDPOINT, id_token_verification_endpoint = FAKE_ID_TOKEN_ENDPOINT, client_public_info_endpoint = FAKE_CLIENT_PUBLIC_INFO_ENDPOINT, isV2Api = true)
         Assert.assertEquals(FAKE_CLIENT_PUBLIC_INFO_ENDPOINT_WITH_CLIENT_ID, grabAuthRepository.getClientInfoEndpointUrl())
     }
 
@@ -246,9 +318,25 @@ class GrabIdPartnerTest {
         grabAuthRepository.setFetchClientPublicInfo(Observable.error(Throwable()))
 
         grabIdPartner.login(loginSession, context, testLoginCallback)
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.CLIENTPUBLICINFO, GrabIdPartnerErrorCode.errorInClientPublicInfoEndpoint, "$CONST_READ_RESOURCE_STRING $CONST_READ_RESOURCE_STRING $FAKE_CLIENT_PUBLIC_INFO_ENDPOINT_WITH_CLIENT_ID", null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.CLIENTPUBLICINFO, GrabIdPartnerErrorCode.errorInClientPublicInfoEndpoint, "$CONST_READ_RESOURCE_STRING $CONST_READ_RESOURCE_STRING $FAKE_CLIENT_PUBLIC_INFO_ENDPOINT_WITH_CLIENT_ID", null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
+    }
+
+    @Test
+    fun `verify loginV2 with no cache and empty client_public_info_endpoint return the specific error`() {
+        loginSession.clientId = FAKE_CLIENT_ID
+        loginSession.redirectUri = FAKE_REDIRECT_URI
+        loginSession.scope = PARTNER_SCOPE
+        loginSession.serviceDiscoveryUrl = FAKE_DISCOVERY_URL
+        utility.setObjectToSharedPref(null)
+        grabAuthRepository.setCallDiscovery(Observable.just(DiscoveryResponse(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT, FAKE_CLIENT_PUBLIC_INFO_ENDPOINT)))
+        grabAuthRepository.setFetchClientPublicInfo(Observable.error(Throwable()))
+
+        grabIdPartner.loginV2(loginSession, activity, testLoginCallbackV2)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.CLIENTPUBLICINFO, GrabIdPartnerErrorCode.errorInClientPublicInfoEndpoint, "$CONST_READ_RESOURCE_STRING $CONST_READ_RESOURCE_STRING $FAKE_CLIENT_PUBLIC_INFO_ENDPOINT_WITH_CLIENT_ID", null)
+        Assert.assertTrue(testLoginCallbackV2.verifyOnError(grabIdPartnerError))
+        testLoginCallbackV2.verifyOnSuccess(0)
     }
 
     @Test
@@ -258,8 +346,21 @@ class GrabIdPartnerTest {
     }
 
     @Test
+    fun `verify loginV2 with no cache and discovery endpoints`() {
+        prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT, FAKE_CLIENT_PUBLIC_INFO_ENDPOINT, isV2Api = true)
+        verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(false))
+    }
+
+    @Test
     fun `verify login with with login_hint in the loginSession object`() {
         prerequisiteToValidateCallDiscovery(auth_endpoint = FAKE_AUTH_ENDPOINT, token_endpoint = FAKE_TOKEN_ENDPOINT, id_token_verification_endpoint = FAKE_ID_TOKEN_ENDPOINT, client_public_info_endpoint = FAKE_CLIENT_PUBLIC_INFO_ENDPOINT, protocolInfo = ProtocolInfo("", "", ""), loginHint = LOGIN_HINT)
+        verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(false))
+        verify(launchAppForAuthorization, times(0)).launchOAuthFlow(any(), any(), any(), eq(true))
+    }
+
+    @Test
+    fun `verify loginV2 with with login_hint in the loginSession object`() {
+        prerequisiteToValidateCallDiscovery(auth_endpoint = FAKE_AUTH_ENDPOINT, token_endpoint = FAKE_TOKEN_ENDPOINT, id_token_verification_endpoint = FAKE_ID_TOKEN_ENDPOINT, client_public_info_endpoint = FAKE_CLIENT_PUBLIC_INFO_ENDPOINT, protocolInfo = ProtocolInfo("", "", ""), loginHint = LOGIN_HINT, isV2Api = true)
         verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(false))
         verify(launchAppForAuthorization, times(0)).launchOAuthFlow(any(), any(), any(), eq(true))
     }
@@ -272,8 +373,22 @@ class GrabIdPartnerTest {
     }
 
     @Test
+    fun `verify loginV2 with with id_token_hint in the loginSession object`() {
+        prerequisiteToValidateCallDiscovery(auth_endpoint = FAKE_AUTH_ENDPOINT, token_endpoint = FAKE_TOKEN_ENDPOINT, id_token_verification_endpoint = FAKE_ID_TOKEN_ENDPOINT, client_public_info_endpoint = FAKE_CLIENT_PUBLIC_INFO_ENDPOINT, protocolInfo = ProtocolInfo("", "", ""), idTokenHint = ID_TOKEN_HINT, isV2Api = true)
+        verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(false))
+        verify(launchAppForAuthorization, times(0)).launchOAuthFlow(any(), any(), any(), eq(true))
+    }
+
+    @Test
     fun `verify login when there is a native app available`() {
         prerequisiteToValidateCallDiscovery(auth_endpoint = FAKE_AUTH_ENDPOINT, token_endpoint = FAKE_TOKEN_ENDPOINT, id_token_verification_endpoint = FAKE_ID_TOKEN_ENDPOINT, client_public_info_endpoint = FAKE_CLIENT_PUBLIC_INFO_ENDPOINT, protocolInfo = ProtocolInfo("", "", ""))
+        verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(true))
+        verify(launchAppForAuthorization, times(0)).launchOAuthFlow(any(), any(), any(), eq(false))
+    }
+
+    @Test
+    fun `verify loginV2 when there is a native app available`() {
+        prerequisiteToValidateCallDiscovery(auth_endpoint = FAKE_AUTH_ENDPOINT, token_endpoint = FAKE_TOKEN_ENDPOINT, id_token_verification_endpoint = FAKE_ID_TOKEN_ENDPOINT, client_public_info_endpoint = FAKE_CLIENT_PUBLIC_INFO_ENDPOINT, protocolInfo = ProtocolInfo("", "", ""), isV2Api = true)
         verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(true))
         verify(launchAppForAuthorization, times(0)).launchOAuthFlow(any(), any(), any(), eq(false))
     }
@@ -289,7 +404,7 @@ class GrabIdPartnerTest {
         grabAuthRepository.setFetchClientPublicInfo(Observable.just(ClientPublicInfo(listOf(), "", "", "", "", "")))
 
         grabIdPartner.login(loginSession, context, testLoginCallback)
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, "", Exception())
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.SERVICEDISCOVERY, GrabIdPartnerErrorCode.errorInDiscoveryEndpoint, "", Exception())
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
     }
@@ -298,7 +413,7 @@ class GrabIdPartnerTest {
     fun `verify exchangeToken with empty redirectUrl`() {
         grabIdPartner.exchangeToken(loginSession, "", testLoginCallback)
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.invalidRedirectURI, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.invalidRedirectURI, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
     }
@@ -307,7 +422,7 @@ class GrabIdPartnerTest {
     fun `verify exchangeToken with empty code in redirectUrl`() {
         prerequisiteToValidateExchangeToken("", TEST_RESPONSE_STATE, "", "", "", "", "")
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.invalidCode, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.invalidCode, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
     }
@@ -316,7 +431,7 @@ class GrabIdPartnerTest {
     fun `verify exchangeToken with state mismatch`() {
         prerequisiteToValidateExchangeToken(TEST_RESPONSE_TYPE, TEST_RESPONSE_STATE, "", "", "", "", "")
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.stateMismatch, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.stateMismatch, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
     }
@@ -325,7 +440,7 @@ class GrabIdPartnerTest {
     fun `verify exchangeToken with missing tokenEndPoint`() {
         prerequisiteToValidateExchangeToken(TEST_RESPONSE_TYPE, TEST_RESPONSE_STATE, TEST_RESPONSE_STATE, "", "", "", "")
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.errorInLoginSessionObject, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.errorInLoginSessionObject, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
     }
@@ -334,7 +449,7 @@ class GrabIdPartnerTest {
     fun `verify exchangeToken with getToken api return without access_token`() {
         prerequisiteToValidateExchangeToken(TEST_RESPONSE_TYPE, TEST_RESPONSE_STATE, TEST_RESPONSE_STATE, FAKE_TOKEN_ENDPOINT, "", "", "")
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.missingAccessToken, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.missingAccessToken, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
     }
@@ -350,7 +465,7 @@ class GrabIdPartnerTest {
     fun `verify exchangeToken with getToken api return without expiresIn`() {
         prerequisiteToValidateExchangeToken(TEST_RESPONSE_TYPE, TEST_RESPONSE_STATE, TEST_RESPONSE_STATE, FAKE_TOKEN_ENDPOINT, TEST_ACCESS_TOKEN, TEST_ID_TOKEN, "")
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.missingAccessTokenExpiry, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.missingAccessTokenExpiry, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
     }
@@ -363,7 +478,7 @@ class GrabIdPartnerTest {
 
     @Test
     fun `verify exchangeToken with getToken api returns exception`() {
-        var getURLParamMap = HashMap<String, String>()
+        val getURLParamMap = HashMap<String, String>()
         getURLParamMap[GrabIdPartner.RESPONSE_TYPE] = TEST_RESPONSE_TYPE
         getURLParamMap[GrabIdPartner.RESPONSE_STATE] = TEST_RESPONSE_STATE
         utility.setURLParamReturn(getURLParamMap)
@@ -374,7 +489,7 @@ class GrabIdPartnerTest {
         grabAuthRepository.setGetToken(Observable.error(Exception()))
 
         grabIdPartner.exchangeToken(loginSession, FAKE_REDIRECT_URI, testLoginCallback)
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.network, "", null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.EXCHANGETOKEN, GrabIdPartnerErrorCode.network, "", null)
         Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
         testLoginCallback.verifyOnSuccess(0)
     }
@@ -385,7 +500,7 @@ class GrabIdPartnerTest {
         loginSession.idTokenVerificationEndpoint = ""
 
         grabIdPartner.getIdTokenInfo(loginSession, testGetIdTokenInfoCallback)
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.GETIDTOKENINFO, GrabIdPartnerErrorCode.errorInLoginSessionObject, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.GETIDTOKENINFO, GrabIdPartnerErrorCode.errorInLoginSessionObject, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testGetIdTokenInfoCallback.verifyOnError(grabIdPartnerError))
         testGetIdTokenInfoCallback.verifyOnSuccess(0)
     }
@@ -395,12 +510,12 @@ class GrabIdPartnerTest {
         // set the idTokenVerificationEndpoint endpoint in the loginSession object
         loginSession.idTokenVerificationEndpoint = FAKE_ID_TOKEN_ENDPOINT
 
-        var idTokenInfo = IdTokenInfo()
+        val idTokenInfo = IdTokenInfo()
         idTokenInfo.nonceInternal = TEST_NONCE
         grabAuthRepository.setGetIdTokenInfo(Observable.just(idTokenInfo))
         grabIdPartner.getIdTokenInfo(loginSession, testGetIdTokenInfoCallback)
 
-        var grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.GETIDTOKENINFO, GrabIdPartnerErrorCode.errorInGetIdTokenInfo, CONST_READ_RESOURCE_STRING, null)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.GETIDTOKENINFO, GrabIdPartnerErrorCode.errorInGetIdTokenInfo, CONST_READ_RESOURCE_STRING, null)
         Assert.assertTrue(testGetIdTokenInfoCallback.verifyOnError(grabIdPartnerError))
         testGetIdTokenInfoCallback.verifyOnSuccess(0)
     }
@@ -410,7 +525,7 @@ class GrabIdPartnerTest {
         // set the idTokenVerificationEndpoint endpoint in the loginSession object
         loginSession.idTokenVerificationEndpoint = FAKE_ID_TOKEN_ENDPOINT
 
-        var idTokenInfo = IdTokenInfo()
+        val idTokenInfo = IdTokenInfo()
         grabAuthRepository.setGetIdTokenInfo(Observable.just(idTokenInfo))
         grabIdPartner.getIdTokenInfo(loginSession, testGetIdTokenInfoCallback)
 
@@ -424,11 +539,11 @@ class GrabIdPartnerTest {
         loginSession.nonceInternal = TEST_NONCE
 
         // create non-expired IdTokenInfo object and set it in the cache
-        var idTokenInfo = createValidIdTokenInfo()
+        val idTokenInfo = createValidIdTokenInfo()
         utility.setSerializedIdTokenInfo(idTokenInfo)
 
         // invoke the getIdTokenInfo api with a new IdTokenInfo object instance but make sure getIdTokenInfo returns the cached version of IdTokenInfo instance
-        var idTokenInfo2 = createValidIdTokenInfo()
+        val idTokenInfo2 = createValidIdTokenInfo()
         grabAuthRepository.setGetIdTokenInfo(Observable.just(idTokenInfo2))
         grabIdPartner.getIdTokenInfo(loginSession, testGetIdTokenInfoCallback)
 
@@ -446,7 +561,7 @@ class GrabIdPartnerTest {
         utility.setSerializedIdTokenInfo(createExpiredIdTokenInfo())
 
         // create a new non-expired IdTokenInfo instance and verify getIdTokenInfo api is returning this instance
-        var idTokenInfo2 = createValidIdTokenInfo()
+        val idTokenInfo2 = createValidIdTokenInfo()
         grabAuthRepository.setGetIdTokenInfo(Observable.just(idTokenInfo2))
         grabIdPartner.getIdTokenInfo(loginSession, testGetIdTokenInfoCallback)
 
@@ -469,7 +584,7 @@ class GrabIdPartnerTest {
     private fun prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(client_id: String?, redirect_uri: String?, discovery_url: String?, partner_scope: String?) {
         GrabIdPartner.isSdkInitialized = true
 
-        var partnerInfoMap = HashMap<String, String?>()
+        val partnerInfoMap = HashMap<String, String?>()
         partnerInfoMap[PARTNER_CLIENT_ID_ATTRIBUTE] = client_id
         partnerInfoMap[PARTNER_REDIRECT_URI_ATTRIBUTE] = redirect_uri
         partnerInfoMap[PARTNER_SERVICE_DISCOVERY_URL] = discovery_url
@@ -480,15 +595,19 @@ class GrabIdPartnerTest {
         grabIdPartner.loadLoginSession(loginSessionCallback)
     }
 
-    private fun prerequisiteToValidateLogin(client_id: String, redirect_url: String, partner_scope: String, serviceDiscovery_url: String) {
+    private fun prerequisiteToValidateLogin(client_id: String, redirect_url: String, partner_scope: String, serviceDiscovery_url: String, isV2Api: Boolean = false) {
         loginSession.clientId = client_id
         loginSession.redirectUri = redirect_url
         loginSession.scope = partner_scope
         loginSession.serviceDiscoveryUrl = serviceDiscovery_url
-        grabIdPartner.login(loginSession, context, testLoginCallback)
+        if (isV2Api) {
+            grabIdPartner.loginV2(loginSession, activity, testLoginCallbackV2)
+        } else {
+            grabIdPartner.login(loginSession, context, testLoginCallback)
+        }
     }
 
-    private fun prerequisiteToValidateCallDiscovery(auth_endpoint: String, token_endpoint: String, id_token_verification_endpoint: String, client_public_info_endpoint: String, protocolInfo: ProtocolInfo? = null, loginHint: String? = null, idTokenHint: String? = null) {
+    private fun prerequisiteToValidateCallDiscovery(auth_endpoint: String, token_endpoint: String, id_token_verification_endpoint: String, client_public_info_endpoint: String, protocolInfo: ProtocolInfo? = null, loginHint: String? = null, idTokenHint: String? = null, isV2Api: Boolean = false) {
         loginSession.clientId = FAKE_CLIENT_ID
         loginSession.redirectUri = FAKE_REDIRECT_URI
         loginSession.scope = PARTNER_SCOPE
@@ -500,12 +619,18 @@ class GrabIdPartnerTest {
         grabAuthRepository.setCallDiscovery(Observable.just(DiscoveryResponse(auth_endpoint, token_endpoint, id_token_verification_endpoint, client_public_info_endpoint)))
         grabAuthRepository.setFetchClientPublicInfo(Observable.just(ClientPublicInfo(listOf(), "", "", "", "", "")))
         utility.setIsPackageInstalled(protocolInfo)
-        whenever(context.packageManager).thenReturn(packageManager)
-        grabIdPartner.login(loginSession, context, testLoginCallback)
+
+        if (isV2Api) {
+            whenever(activity.packageManager).thenReturn(packageManager)
+            grabIdPartner.loginV2(loginSession, activity, testLoginCallbackV2)
+        } else {
+            whenever(context.packageManager).thenReturn(packageManager)
+            grabIdPartner.login(loginSession, context, testLoginCallback)
+        }
     }
 
     private fun prerequisiteToValidateExchangeToken(response_type: String, state: String, loginSession_state: String, token_endpoint: String, access_token: String?, id_token: String?, expires_in: String?) {
-        var getURLParamMap = HashMap<String, String>()
+        val getURLParamMap = HashMap<String, String>()
         getURLParamMap[GrabIdPartner.RESPONSE_TYPE] = response_type
         getURLParamMap[GrabIdPartner.RESPONSE_STATE] = state
         utility.setURLParamReturn(getURLParamMap)
@@ -519,7 +644,7 @@ class GrabIdPartnerTest {
     }
 
     private fun createExpiredIdTokenInfo(): IdTokenInfo {
-        var idTokenInfo = IdTokenInfo()
+        val idTokenInfo = IdTokenInfo()
         idTokenInfo.audienceInternal = UUID.randomUUID().toString()
         idTokenInfo.nonceInternal = UUID.randomUUID().toString()
         idTokenInfo.expirationInternal = utility.subtractDaysFromCurrentDate(3)
@@ -528,7 +653,7 @@ class GrabIdPartnerTest {
     }
 
     private fun createValidIdTokenInfo(): IdTokenInfo {
-        var idTokenInfo = IdTokenInfo()
+        val idTokenInfo = IdTokenInfo()
         idTokenInfo.audienceInternal = UUID.randomUUID().toString()
         idTokenInfo.nonceInternal = TEST_NONCE
         idTokenInfo.expirationInternal = utility.addDaysToCurrentDate(3)
@@ -539,7 +664,7 @@ class GrabIdPartnerTest {
 }
 
 class TestLoginCallback : LoginCallback, ExchangeTokenCallback, LogoutCallback {
-    private val mockLoginCallback: LoginCallback = Mockito.mock(LoginCallback::class.java)
+    private val mockLoginCallback: LoginCallback = mock(LoginCallback::class.java)
     private var error: GrabIdPartnerError? = null
 
     override fun onSuccess() {
@@ -562,6 +687,32 @@ class TestLoginCallback : LoginCallback, ExchangeTokenCallback, LogoutCallback {
 
     fun reset() {
         Mockito.reset(mockLoginCallback)
+    }
+}
+
+class TestLoginCallbackV2 : LoginCallbackV2 {
+    private val mockLoginCallbackV2: LoginCallbackV2 = mock()
+    private var error: GrabIdPartnerError? = null
+    override fun onSuccessCache() {
+        mockLoginCallbackV2.onSuccessCache()
+    }
+
+    override fun onSuccess() {
+        mockLoginCallbackV2.onSuccess()
+    }
+
+    override fun onError(grabIdPartnerError: GrabIdPartnerError) {
+        this.error = grabIdPartnerError
+    }
+
+    fun verifyOnError(expected: GrabIdPartnerError): Boolean {
+        return this.error != null && this.error?.localizeMessage?.trim().equals(expected.localizeMessage?.trim()) &&
+                this.error?.code?.equals(expected.code) ?: false &&
+                this.error?.grabIdPartnerErrorDomain?.equals(expected.grabIdPartnerErrorDomain) ?: false
+    }
+
+    fun verifyOnSuccess(i: Int) {
+        Mockito.verify(mockLoginCallbackV2, Times(i)).onSuccess()
     }
 }
 
