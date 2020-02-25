@@ -8,7 +8,7 @@
 
 package com.grab.partner.sdk.sampleapp.viewmodel
 
-import android.content.Context
+import android.app.Activity
 import androidx.databinding.ObservableField
 import androidx.databinding.ObservableInt
 import android.text.method.ScrollingMovementMethod
@@ -16,7 +16,7 @@ import android.view.View
 import com.grab.partner.sdk.ExchangeTokenCallback
 import com.grab.partner.sdk.GetIdTokenInfoCallback
 import com.grab.partner.sdk.GrabIdPartner
-import com.grab.partner.sdk.LoginCallback
+import com.grab.partner.sdk.LoginCallbackV2
 import com.grab.partner.sdk.LoginSessionCallback
 import com.grab.partner.sdk.LogoutCallback
 import com.grab.partner.sdk.models.GrabIdPartnerError
@@ -28,7 +28,7 @@ import com.grab.partner.sdk.sampleapp.models.UserInfoAPIResponse
 import com.grab.partner.sdk.sampleapp.scheduleprovider.SchedulerProvider
 import retrofit2.HttpException
 
-class MainActivityViewModel(var context: Context,
+class MainActivityViewModel(private val activity: Activity,
                             private val grabRepository: GrabRepository,
                             private val schedulerProvider: SchedulerProvider) {
     companion object {
@@ -53,9 +53,9 @@ class MainActivityViewModel(var context: Context,
         GrabIdPartner.instance.loadLoginSession(object : LoginSessionCallback {
             override fun onSuccess(loginSession: LoginSession) {
                 MainActivityViewModel.loginSession = loginSession
-                GrabIdPartner.instance.login(loginSession, context, object : LoginCallback {
+                GrabIdPartner.instance.loginV2(loginSession, activity, object : LoginCallbackV2 {
                     override fun onSuccess() {
-                        if (!loginSession.accessToken.isEmpty()) {
+                        if (loginSession.accessToken.isNotEmpty()) {
                             stringMessage.set(createTokenResponse(loginSession))
                             progressBarVisibility.set(View.GONE)
                         }
@@ -65,6 +65,12 @@ class MainActivityViewModel(var context: Context,
                         setErrorState(grabIdPartnerError)
                     }
 
+                    override fun onSuccessCache() {
+                        if (loginSession.accessToken.isNotEmpty()) {
+                            stringMessage.set(createTokenResponse(loginSession))
+                            progressBarVisibility.set(View.GONE)
+                        }
+                    }
                 })
             }
 
@@ -126,7 +132,7 @@ class MainActivityViewModel(var context: Context,
      * To initiate the logout/clear loginSession process
      */
     fun clearGrabSignInSession() {
-        var loginSession = MainActivityViewModel.loginSession
+        var loginSession = loginSession
         loginSession?.let {
             GrabIdPartner.instance.logout(loginSession, object : LogoutCallback {
                 override fun onSuccess() {
@@ -153,9 +159,9 @@ class MainActivityViewModel(var context: Context,
                 }, { error ->
                     if (error is HttpException) {
                         val errorJsonString = error.response()?.errorBody()?.string()
-                        stringMessage.set(context.resources.getString(R.string.error_accessing_protected_resource)  + " Error: $errorJsonString")
+                        stringMessage.set(activity.resources.getString(R.string.error_accessing_protected_resource) + " Error: $errorJsonString")
                     }
-                    stringMessage.set(context.resources.getString(R.string.error_accessing_protected_resource) + error.localizedMessage)
+                    stringMessage.set(activity.resources.getString(R.string.error_accessing_protected_resource) + error.localizedMessage)
                 })
     }
 

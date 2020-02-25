@@ -8,16 +8,15 @@
 
 package com.grab.partner.sdk.sampleappjava.viewmodel;
 
-import android.content.Context;
 import androidx.databinding.ObservableField;
 import androidx.databinding.ObservableInt;
-import android.text.method.ScrollingMovementMethod;
 
+import android.text.method.ScrollingMovementMethod;
 import android.view.View;
+
 import com.grab.partner.sdk.ExchangeTokenCallback;
 import com.grab.partner.sdk.GetIdTokenInfoCallback;
 import com.grab.partner.sdk.GrabIdPartner;
-import com.grab.partner.sdk.LoginCallback;
 import com.grab.partner.sdk.LoginSessionCallback;
 import com.grab.partner.sdk.LogoutCallback;
 import com.grab.partner.sdk.models.GrabIdPartnerError;
@@ -28,16 +27,16 @@ import com.grab.partner.sdk.sampleappjava.databinding.ActivityMainBinding;
 import org.jetbrains.annotations.NotNull;
 
 public class MainActivityViewModel {
-    GrabIdPartner grabIdPartner = (GrabIdPartner) GrabIdPartner.Companion.getInstance();
+    private GrabIdPartner grabIdPartner = (GrabIdPartner) GrabIdPartner.Companion.getInstance();
     private static LoginSession loginSession = null;
-    private Context context = null;
+    private android.app.Activity activity;
     private String redirectUrl;
     private ActivityMainBinding binding;
     private ObservableField<String> stringMessage = new ObservableField<>();
     private ObservableInt progressBarVisibility = new ObservableInt(View.GONE);
 
-    public MainActivityViewModel(Context context, ActivityMainBinding binding) {
-        this.context = context;
+    public MainActivityViewModel(android.app.Activity activity, ActivityMainBinding binding) {
+        this.activity = activity;
         this.binding = binding;
         binding.defaulttextview.setMovementMethod(new ScrollingMovementMethod());
     }
@@ -48,7 +47,7 @@ public class MainActivityViewModel {
             @Override
             public void onSuccess(@NotNull final LoginSession loginSession) {
                 MainActivityViewModel.loginSession = loginSession;
-                grabIdPartner.login(loginSession, context, new LoginCallback() {
+                grabIdPartner.loginV2(loginSession, activity, new com.grab.partner.sdk.LoginCallbackV2() {
                     @Override
                     public void onSuccess() {
                         if (!loginSession.getAccessToken().isEmpty()) {
@@ -60,6 +59,14 @@ public class MainActivityViewModel {
                     @Override
                     public void onError(@NotNull GrabIdPartnerError grabIdPartnerError) {
                         stringMessage.set(grabIdPartnerError.getLocalizeMessage());
+                        progressBarVisibility.set(View.GONE);
+                    }
+
+                    @Override
+                    public void onSuccessCache() {
+                        if (!loginSession.getAccessToken().isEmpty()) {
+                            stringMessage.set(createTokenResponse(loginSession));
+                        }
                         progressBarVisibility.set(View.GONE);
                     }
                 });

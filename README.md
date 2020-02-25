@@ -42,43 +42,39 @@ Add the following snippet, replacing the placeholders within the square brackets
 
 Initialize GrabIdPartner from the entry point of Partner application, usually inside on the `onCreate` of MainApplication class as below
 ```
-GrabIdPartner.instance.initialize(applicationContext)
+GrabIdPartner.instance.initialize(applicationContext, null)
 ```
 
 ### Login with GrabId service
 
-Using the `loadLoginSession` API to create the LoginSession object using configurations from the `AndroidManifest.xml`. Use this LoginSession to call the `login` api to complete the login flow.
+Use the `loadLoginSession` API to create the LoginSession object using configurations from the `AndroidManifest.xml`. There is another `loadLoginSession` API that can read all the configurations parameters as function parameters, if we use this contract then no need to set the parameters inside `AndroidManifest.xml`. Use the LoginSession object received from `loadLoginSession` API callback, to call the `loginV2` api and complete the login flow, `loginV2` expects an Activity context.
 ```
 private var loginSession: LoginSession? = null
-fun clickLogin() {
-  GrabIdPartner.instance.loadLoginSession(this::loadLoginSessionCallBack)
-}
+    fun clickLogin() {
+        progressBarVisibility.set(View.VISIBLE)
+        stringMessage.set("")
+        GrabIdPartner.instance.loadLoginSession(object : LoginSessionCallback {
+            override fun onSuccess(loginSession: LoginSession) {
+                MainActivityViewModel.loginSession = loginSession
+                GrabIdPartner.instance.loginV2(loginSession, activity, object : LoginCallbackV2 {
+                    // callback implementation
+                })
+            }
 
-/**
-* callback for loadLoginSession api
-*/
-private fun loadLoginSessionCallBack(loginSession: LoginSession?, grabIdPartnerError: GrabIdPartnerError?) {
-  if (loginSession != null) {
-    this.loginSession = loginSession
-    GrabIdPartner.instance.login(loginSession, context, this::loginCallBack)
-    } else {
-      if (grabIdPartnerError != null) {
-       // received the GrabIdPartnerError
-      }
+            override fun onError(grabIdPartnerError: GrabIdPartnerError) {
+            }
+        })
     }
   }
 ```
 ### Handling URL redirect after user authenticate with Web login
 
-The login API will trigger the Grab web login flow. After the user successfully authorizes the application, Grab Id service will validate the redirect URL in the query parameter. If the redirect URL is registered with Grab Id service, Grab Id service will perform the redirect the browser back to the application with an authorization code, state, and error (if any) in the redirect query parameters.  
+The login API will trigger the Grab web login flow or native app (Grab passenger app) login flow based on the configuration available in the client_public_info_endpoint in the discovery URL. To setup the native app OAuth flow please visit [our developer site](https://developers.grab.com) and configure your clientId accordingly. After the user successfully authorizes the application, Grab Id service will validate the redirect URL in the query parameter. If the redirect URL is registered with Grab Id service, Grab Id service will perform the redirect the browser back to the application with an authorization code, state, and error (if any) in the redirect query parameters.  
 
-#### Activity launchMode
-Partner app activity which will listen to the deep link redirect from the Grab ID service, have to set the launchMode to `singleTask` or `singleTop` inside partner app `AndroidManifest.xml` file as below
+Partner app activity which will listen to the deep link redirect from the Grab ID service, have to set the appropriate `intent-filter` inside partner app `AndroidManifest.xml` file as below
 ```
 <?xml version="1.0" encoding="UTF-8"?>
-<activity            
-android:name=".views.MainActivity"            
-android:launchMode="singleTask">
+<activity android:name=".views.MainActivity">
   <intent-filter>
     ...
   </intent-filter>
@@ -100,17 +96,21 @@ override fun onNewIntent(intent: Intent) {
 ```
 
 ### Exchange token with GrabID Partner SDK
-Once Partner app receive the redirectUrl, then can start the token exchange process using GrabID Partner SDK API `exchangeToken`.
+Once Partner app receive the redirectUrl, then can start the token exchange process using GrabID Partner SDK API `exchangeToken` API.
 ```
-GrabIdPartner.instance.exchangeToken(loginSession!!, redirectUrl, this::exchangeTokenApiCallBack)
+GrabIdPartner.instance.exchangeToken(loginSession, redirectUrl, object : ExchangeTokenCallback {
+    // callback implementation
+})
 ```
 
 ### Get Id Token Information
 
-Partner application can get information about the id token using the getIdTokenInfo API:
+Partner application can get information about the id token using the `getIdTokenInfo` API:
 
 ```
-GrabIdPartner.instance.getIdTokenInfo(loginSession!!, this::getIdTokenInfoCallBack)
+GrabIdPartner.instance.getIdTokenInfo(loginSession, object : GetIdTokenInfoCallback {
+    // callback implementation
+})
 ```
 
 IdToken contains information about the valid time of the token, partner id, partner user id, nonce, issuer, etc
@@ -135,7 +135,9 @@ boolean isValid = grabIdPartner.isValidIdToken(idTokenInfo: IdTokenInfo)
 Partner application can logout using the logout API. Currently logout removes cached LoginSession and IdTokenInfo from the Android KeyStore and SharedPreferences. It does not support revoking the tokens from Grab Id service. Revoking authorization will be supported in future release.   
 
 ```
-GrabIdPartner.instance.logout(loginSession, this::clearGrabSignInSessionCallback)
+GrabIdPartner.instance.logout(loginSession, object : LogoutCallback {
+    // callback implementation
+})
 ```
 
 ### Analytics

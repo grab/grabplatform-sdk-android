@@ -8,6 +8,7 @@
 
 package com.grab.partner.sdk
 
+import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
@@ -341,6 +342,10 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                             callDiscovery(context, loginSession, callback)
                         })
         )
+    }
+
+    override fun loginV2(loginSession: LoginSession, activity: Activity, callback: LoginCallbackV2) {
+        login(loginSession, activity, callback)
     }
 
     /**

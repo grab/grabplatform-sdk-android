@@ -9,9 +9,11 @@
 package com.grab.partner.sdk.sampleappjava.view;
 
 import android.content.Intent;
-import androidx.databinding.DataBindingUtil;
 import android.os.Bundle;
+
+import androidx.databinding.DataBindingUtil;
 import androidx.appcompat.app.AppCompatActivity;
+
 
 import com.grab.partner.sdk.sampleappjava.viewmodel.MainActivityViewModel;
 import com.grab.partner.sdk.sampleappjava.R;
@@ -20,12 +22,13 @@ import com.grab.partner.sdk.sampleappjava.databinding.ActivityMainBinding;
 public class MainActivity extends AppCompatActivity {
 
     private MainActivityViewModel viewModel;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
-        viewModel = new MainActivityViewModel(getApplicationContext(), binding);
+        viewModel = new MainActivityViewModel(this, binding);
         binding.setVm(viewModel);
     }
 

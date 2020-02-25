@@ -7,6 +7,7 @@
  */
 package com.grab.partner.sdk
 
+import android.app.Activity
 import android.content.Context
 import com.grab.partner.sdk.models.GrabIdPartnerError
 import com.grab.partner.sdk.models.GrabIdPartnerErrorCode
@@ -54,6 +55,14 @@ internal open class StubGrabIdPartner : GrabIdPartnerProtocol {
             callback.onError(settableError)
         } else {
             callback.onSuccess()
+        }
+    }
+
+    override fun loginV2(loginSession: LoginSession, activity: Activity, callback: LoginCallbackV2) {
+        if (callbackStatus) {
+            callback.onError(settableError)
+        } else {
+            callback.onSuccessCache()
         }
     }
 
