@@ -143,7 +143,7 @@ internal class LaunchAppForAuthorizationImpl : LaunchAppForAuthorization {
                     .setShowTitle(true)
                     .build()
 
-            customTabsIntent.intent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY
+            customTabsIntent.intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
             // if user is using the old login api and sending the application context then we have to add this FLAG_ACTIVITY_NEW_TASK flag
             if (context is Application) {
                 customTabsIntent.intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
