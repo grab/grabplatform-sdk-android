@@ -11,20 +11,19 @@ package com.grab.partner.sdk.utils
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
-import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.res.Resources
-import android.database.Observable
 import android.net.Uri
 import android.util.Base64
-import android.util.Log
 import com.google.gson.Gson
 import com.grab.partner.sdk.GrabIdPartner
 import com.grab.partner.sdk.GrabIdPartner.Companion.ENCODING_SETTING
 import com.grab.partner.sdk.models.IdTokenInfo
 import com.grab.partner.sdk.models.LoginSession
+import com.grab.partner.sdk.models.PlaystoreProtocol
 import com.grab.partner.sdk.models.ProtocolInfo
 import io.reactivex.Maybe
+import io.reactivex.Observable
 import io.reactivex.Single
 import java.net.URLDecoder
 import java.security.MessageDigest
@@ -50,6 +49,11 @@ interface IUtility {
      * Method to check if a specific package is installed in the device
      */
     fun isPackageInstalled(protocols: List<String>?, packageManager: PackageManager): Maybe<ProtocolInfo>
+
+    /**
+     * Method to check if specific protocol for launching to backend is available
+     */
+    fun getPlaystoreString(protocols: List<String>?, packageManager: PackageManager): Single<String>
 
     /**
      * Retrieve the string values from the string.xml file
@@ -376,6 +380,29 @@ internal class Utility : IUtility {
             }
         }
         return Maybe.empty()
+    }
+
+    override fun getPlaystoreString(protocols: List<String>?, packageManager: PackageManager): Single<String> {
+
+        return if (protocols.isNullOrEmpty()) {
+            Single.just("")
+        } else {
+            Observable.fromIterable(protocols)
+                    .map { mapToPlaystoreLink(it) }
+                    .filter(String::isNotEmpty)
+                    .firstOrError()
+                    .onErrorReturn { "" }
+        }
+    }
+
+    private fun mapToPlaystoreLink(it: String): String {
+        return try {
+            val protocolInfo = Gson().fromJson(it, PlaystoreProtocol::class.java)
+            protocolInfo.appstore_link_adr ?: ""
+            // if any of the required parameters are missing then no need to proceed
+        } catch (ex: Exception) {
+            ""
+        }
     }
 }
 

@@ -38,6 +38,7 @@ internal interface LaunchAppForAuthorization {
     fun speedUpChromeTabs()
 }
 
+
 internal class LaunchAppForAuthorizationImpl : LaunchAppForAuthorization {
 
     // Chrome Custom Tab variables
@@ -46,6 +47,7 @@ internal class LaunchAppForAuthorizationImpl : LaunchAppForAuthorization {
     private lateinit var mCustomTabsServiceConnection: CustomTabsServiceConnection
     private lateinit var customTabsIntent: CustomTabsIntent
     private val CUSTOM_TAB_PACKAGE_NAME = "com.android.chrome"
+    internal var intentProvider: IntentProvider = IntentProviderImpl()
 
     /**
      *  Launch OAuth flow using either Chrome Custom Tab or native Grab app then return back to client activity through the deep link redirect URL
@@ -56,16 +58,15 @@ internal class LaunchAppForAuthorizationImpl : LaunchAppForAuthorization {
         if (shouldLaunchNativeApp) {
             // launch the deep link
             try {
-                launchPartnerLogin(context, uri, loginSession, callback)
+               return launchPartnerLogin(context, uri, loginSession, callback)
             } catch (ex: Exception) {
-                // if login using native app failed let's try the Chrome custom tab flow
-                try {
-                    launchOAuthFlow(context, loginSession, callback)
-                } catch (ex: Exception) {
-                    //can't do anything here, so sending the onError callback
-                    callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LAUNCHOAUTHFLOW, GrabIdPartnerErrorCode.errorLaunchingChromeCustomTab, ex.localizedMessage, null))
-                }
+                //todo possibly add qem
             }
+        }
+
+        //if playstore link is available force to playstore
+        if (loginSession.playstoreLink.isNotEmpty()) {
+            launchPlaystore(context, loginSession, callback)
         } else {
             try {
                 // launch chrome custom tab
@@ -98,7 +99,8 @@ internal class LaunchAppForAuthorizationImpl : LaunchAppForAuthorization {
 
     private fun setupUri(loginSession: LoginSession, isNativeAppAvailable: Boolean): Uri {
         val builder = if (isNativeAppAvailable) {
-            Uri.parse(loginSession.deeplinkUri).buildUpon()
+            Uri.parse(loginSession.deeplinkUri)
+                    .buildUpon()
                     .appendQueryParameter("auth_endpoint", loginSession.authorizationEndpoint)
         } else {
             Uri.parse(loginSession.authorizationEndpoint).buildUpon()
@@ -154,7 +156,7 @@ internal class LaunchAppForAuthorizationImpl : LaunchAppForAuthorization {
     }
 
     private fun launchPartnerLogin(context: Context, uri: Uri, loginSession: LoginSession, callback: LoginCallback) {
-        val intent = Intent(Intent.ACTION_VIEW)
+        val intent = intentProvider.provideIntent(Intent.ACTION_VIEW)
         intent.data = uri
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         if (intent.resolveActivity(context.packageManager) != null) {
@@ -164,5 +166,29 @@ internal class LaunchAppForAuthorizationImpl : LaunchAppForAuthorization {
             // if for any reason we fail to resolve the activity then launch the Chrome Custom Tab flow
             launchOAuthFlow(context, loginSession, callback)
         }
+    }
+
+    private fun launchPlaystore(context: Context, loginSession: LoginSession, callback: LoginCallback) {
+        val intent = intentProvider.provideIntent(Intent.ACTION_VIEW)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        var thrown: Throwable? = null
+        var code: GrabIdPartnerErrorCode = GrabIdPartnerErrorCode.failedTolaunchAppStoreLink
+        //if success we will override the above value
+
+        if (intent.resolveActivity(context.packageManager) != null) {
+            try {
+                intent.data = Uri.parse(loginSession.playstoreLink)
+                context.startActivity(intent)
+                code = GrabIdPartnerErrorCode.launchAppStoreLink
+            } catch (throwable: Throwable) {
+                //possible log in future
+                thrown = throwable
+            }
+        }
+        //log error as technically this is not the correct way of handling and will never get redirect
+        callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LAUNCHOAUTHFLOW,
+                code,
+                loginSession.playstoreLink,
+                null))
     }
 }

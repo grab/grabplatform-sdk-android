@@ -32,3 +32,8 @@ data class ProtocolInfo(
         @SerializedName("protocol_adr")
         val protocol_adr: String
 )
+
+data class PlaystoreProtocol(
+        @SerializedName("appstore_link_adr")
+        val appstore_link_adr: String
+)

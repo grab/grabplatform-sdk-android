@@ -62,6 +62,9 @@ class LoginSession {
     internal var deeplinkUriInternal: String = EMPTY_STRING_CONST
     val deeplinkUri get() = deeplinkUriInternal
 
+    internal var playstoreLinkInternal: String = EMPTY_STRING_CONST
+    val playstoreLink get() = playstoreLinkInternal
+
     /****************************************************************
     // internal to GrabId Partner SDK
      ****************************************************************/
