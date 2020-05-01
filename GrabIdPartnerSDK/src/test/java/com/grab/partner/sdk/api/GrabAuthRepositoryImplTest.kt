@@ -118,5 +118,6 @@ class GrabAuthRepositoryImplTest {
         private const val FAKE_PRIVACY_POLICY_URL = "privacy_policy_url"
         private const val FAKE_PRODUCT_NAME = "product_name"
         private const val FAKE_TERMS_OF_SERVICE_URL = "terms_of_service_url"
+        private const val FAKE_ADR_PLAYSTORE_URL = "terms_of_service_url"
     }
 }

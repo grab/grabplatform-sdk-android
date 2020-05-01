@@ -615,6 +615,14 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                                         extraMessage = "${utility.readResourceString(applicationContext, ERROR_FETCHING_CLIENT_PUBLIC_INFO_URL)} ${utility.readResourceString(applicationContext, URL_INVOKED)} ${discoveryResponse.client_public_info_endpoint}", cause = it))
                             }
                 }
+                .flatMapSingle { pair ->
+                    //get playstore string from second protocol
+                    utility.getPlaystoreString(pair.second.custom_protocols, context.packageManager)
+                            .map {
+                                loginSession.playstoreLinkInternal = it;
+                                pair
+                            }
+                }
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .subscribe({ result ->

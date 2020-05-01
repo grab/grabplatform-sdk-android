@@ -35,6 +35,7 @@ class StubUtility : IUtility {
     private var objectFromSharedPreferences: String? = null
     private var idTokenInfo: IdTokenInfo? = null
     private var protocolInfo: ProtocolInfo? = null
+    var playstoreString: String = ""
 
     override fun getPartnerInfo(context: Context?, attribute: String): String? {
         return partnerInfoMap?.get(attribute)
@@ -142,6 +143,10 @@ class StubUtility : IUtility {
             return Maybe.empty()
 
         return Maybe.just(protocolInfo)
+    }
+
+    override fun getPlaystoreString(protocols: List<String>?, packageManager: PackageManager): Single<String> {
+        return Single.just(playstoreString)
     }
 
     fun setIsPackageInstalled(protocolInfo: ProtocolInfo?) {
