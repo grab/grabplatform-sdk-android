@@ -28,7 +28,8 @@ import com.grab.partner.sdk.models.LoginSession
 
 internal interface LaunchAppForAuthorization {
     /**
-     * Launch OAuth flow using either Chrome Custom Tab or native Grab app then return back to client activity through the deep link redirect URL
+     * Launch OAuth flow Using native Grab App if available or fall back to either launching playstore
+     * if link is available or falling back to weblogin via Chrome Custom Tab
      */
     fun launchOAuthFlow(context: Context, loginSession: LoginSession, callback: LoginCallback, shouldLaunchNativeApp: Boolean = false)
 
@@ -50,7 +51,10 @@ internal class LaunchAppForAuthorizationImpl : LaunchAppForAuthorization {
     internal var intentProvider: IntentProvider = IntentProviderImpl()
 
     /**
-     *  Launch OAuth flow using either Chrome Custom Tab or native Grab app then return back to client activity through the deep link redirect URL
+     *  Launch OAuth flow using native Grab app then return back to client activity through the deep link redirect URL, if Native app is
+     *  not available we will fallback to either Chrome Custom Tab or launch a link to the playstore
+     *  we will only launch into the playstore if a link is available otherwise we will fallback
+     *  to chrome custom tabs
      */
     override fun launchOAuthFlow(context: Context, loginSession: LoginSession, callback: LoginCallback, shouldLaunchNativeApp: Boolean) {
         val uri = setupUri(loginSession, shouldLaunchNativeApp)
@@ -168,6 +172,13 @@ internal class LaunchAppForAuthorizationImpl : LaunchAppForAuthorization {
         }
     }
 
+    /**
+     * Will launch intent into the playstore link if it is available and there is a package that
+     * can launch the given module.
+     *
+     * will call [LoginCallback] onError with correct [GrabIdPartnerErrorCode] if intent is launched
+     * by system or fails to launch so that consumer will not wait for success deeplink
+     */
     private fun launchPlaystore(context: Context, loginSession: LoginSession, callback: LoginCallback) {
         val intent = intentProvider.provideIntent(Intent.ACTION_VIEW)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK

@@ -2,11 +2,18 @@ package com.grab.partner.sdk.utils
 
 import android.content.Intent
 
-interface IntentProvider {
+/**
+ * Simple class that allows testability of intent providing
+ */
+internal interface IntentProvider {
+
+    /**
+     * will provide intent with a given action String
+     */
     fun provideIntent(action: String) : Intent
 }
 
-class IntentProviderImpl : IntentProvider {
+internal class IntentProviderImpl : IntentProvider {
     override fun provideIntent(action: String): Intent {
         return Intent(action)
     }

@@ -663,17 +663,22 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
                                 .subscribeOn(schedulerProvider.io())
                                 .observeOn(schedulerProvider.ui())
                                 .subscribeBy(onSuccess = { protocolInfo ->
-                                    // if we find the package then launch the native app otherwise open the Chrome Custom Tab
+                                    /*if we find the package then launch the native app otherwise
+                                      launch into playstore if link is not null or we will
+                                      launch to the webflow via chrome tabs*/
                                     if (protocolInfo != null) {
                                         loginSession.deeplinkUriInternal = protocolInfo.protocol_adr
                                         launchAppForAuthorization.launchOAuthFlow(context, loginSession, callback, true)
                                     }
                                 }, onError = {
-                                    // if we face any error then launch Chrome browser flow
+                                    /*if we face any error we will launch into playstore if link is
+                                     not null or we will launch to the webflow via chrome tabs */
                                     launchAppForAuthorization.launchOAuthFlow(context, loginSession, callback)
                                     LogUtils.debug("callDiscovery", it.localizedMessage ?: "")
                                 }, onComplete = {
-                                    // if we're here means we haven't find the required native app so will launch the Chrome browser flow
+                                    /*if we're here means we haven't find the required native app
+                                      so will launch into playstore if link is not null or we will
+                                      launch to the webflow via chrome tab*/
                                     launchAppForAuthorization.launchOAuthFlow(context, loginSession, callback)
                                 })
                     }

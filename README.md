@@ -70,6 +70,12 @@ private var loginSession: LoginSession? = null
 ### Handling URL redirect after user authenticate with Web login
 
 The login API will trigger the Grab web login flow or native app (Grab passenger app) login flow based on the configuration available in the client_public_info_endpoint in the discovery URL. To setup the native app OAuth flow please visit [our developer site](https://developers.grab.com) and configure your clientId accordingly. After the user successfully authorizes the application, Grab Id service will validate the redirect URL in the query parameter. If the redirect URL is registered with Grab Id service, Grab Id service will perform the redirect the browser back to the application with an authorization code, state, and error (if any) in the redirect query parameters.  
+Note: If we are meant to login with App but package is unavailable then we will attempt to first launch into playstore link if it has been configured and respond via onError for callback with either:
+failedTolaunchAppStoreLink,     // Failed to launch the configured app store link
+launchAppStoreLink // Launch the configured app store link
+
+Please visit [our developer site](https://developers.grab.com) for integration instructions, documentation, support information,
+
 
 Partner app activity which will listen to the deep link redirect from the Grab ID service, have to set the appropriate `intent-filter` inside partner app `AndroidManifest.xml` file as below
 ```
@@ -132,7 +138,7 @@ boolean isValid = grabIdPartner.isValidIdToken(idTokenInfo: IdTokenInfo)
 
 ### Logout
 
-Partner application can logout using the logout API. Currently logout removes cached LoginSession and IdTokenInfo from the Android KeyStore and SharedPreferences. It does not support revoking the tokens from Grab Id service. Revoking authorization will be supported in future release.   
+Partner application can logout using the logout API. Currently logout removes cached LoginSession and IdTokenInfo from the Android KeyStore and SharedPreferences. It does not support revoking the tokens from Grab Id service. Revoking authorization will be supported in future release.
 
 ```
 GrabIdPartner.instance.logout(loginSession, object : LogoutCallback {
@@ -197,7 +203,7 @@ service: String?              Service (i.e. PASSENGER).
 
 notValidBefore: Date?         Id token validation start time.
 
-expiration: Date?             Id token expiration date.             
+expiration: Date?             Id token expiration date.
 
 issuer: String?               Issuer (i.e. "https://idp.grab.com).
 
@@ -226,9 +232,23 @@ completion handler will be called with null LoginSession and a GrabIdPartnerErro
 ```
 login(loginSession: LoginSession, context: Context, callback: (GrabIdPartnerError?) -> Unit)
 
-The login API validates the access token in the loginSession. If the access token has not expired. It will setup the LoginSession with cached LoginSession and call the completion handler without error. Otherwise, it gets the GrabId service end points from Grab Id discovery service and generates an unique code verifier, nonce, state as security attributes. The security attributes, redirect URL, request string, and acr values are included in the query parameters to create the Grab Id authorize URL.
+The login API will trigger the Grab web login flow, native app (Grab passenger app) login flow or launch the
+Playstore based on the configuration available in the client_public_info_endpoint in the discovery URL.
+To setup the native app OAuth flow please visit our developer site and configure your clientId accordingly.
+After the user successfully authorizes the application, Grab Id service will validate
+the redirect URL in the query parameter. If the redirect URL is registered with Grab Id service,
+Grab Id service will perform the redirect the browser back to the application with an authorization code, state,
+and error (if any) in the redirect query parameters. SDK will first attempt to launch Native app,
+if native app package is unavailable it will check the playstore link, if playstore link is not null it
+will attempt to launch and invoke the callback at onError with either of the following:
+    failedTolaunchAppStoreLink,     // Failed to launch the configured app store link
+    launchAppStoreLink,             // Launch the configured app store link
+Inorder to allow caller to handle appropriate action such as retry. If no playstore link is configured the SDK
+will call to launch in to chrome custom tabs to continue the login flow and eventually redirect
+back to caller application
 
-Then the login API will launch the Chrome Custom Tabs and navigate to Grab Id authorize URL for in-app web authorization. Once the user finished logging in. Grab Id authorize service will redirect back to the app with the redirect url that includes the authorization code, state, and error (if any). Application must handle the URL redirect as described above.
+If Action to login was successful in terms of launching into native app or webflow: User will be
+notified by onSuccess() call
 
 Completion Handler
 Null if no error, GrabIdPartnerError with error code and message otherwise.
@@ -328,6 +348,8 @@ stateMismatch,                  // State received from the redirect url doesn't 
 invalidNonce,                   // The nonce is invalid
 invalidResponse,                // Unexpected response from GrabId service
 errorInLogout                   // Error in logout operation
+failedTolaunchAppStoreLink,     // Failed to launch the configured app store link
+launchAppStoreLink,             // Launch the configured app store link
 ```
 
 ## License

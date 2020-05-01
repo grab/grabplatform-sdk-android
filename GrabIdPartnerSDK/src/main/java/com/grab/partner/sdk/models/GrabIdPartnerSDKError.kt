@@ -41,7 +41,7 @@ enum class GrabIdPartnerErrorCode {
     errorInInitialize,              // Error in initialize
     errorInTearDown,                // Error in teardown
     errorLaunchingChromeCustomTab,   // Error launching oauth flow using Chrome custom tab
-    failedTolaunchAppStoreLink,     // Failed to launch the configured app store link"
+    failedTolaunchAppStoreLink,     // Failed to launch the configured app store link
     launchAppStoreLink, //Launch the configured app store link
 }
 
