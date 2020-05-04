@@ -10,6 +10,7 @@ package com.grab.partner.sdk.utils
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import com.google.gson.Gson
+import com.grab.partner.sdk.models.PlaystoreProtocol
 import com.grab.partner.sdk.models.ProtocolInfo
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
@@ -23,8 +24,10 @@ class UtilityTest {
     private val testPackage2 = "com.test2"
     private val minVersionTestPackage2 = "5.55.0"
     private val packageProtocol = "grab://open"
+    private val testLink = "https://www.google.com"
     private lateinit var protocol1: ProtocolInfo
     private lateinit var protocol2: ProtocolInfo
+    private lateinit var protocol3: PlaystoreProtocol
 
     @Test
     fun `test isPackageInstalled with no protocol list`() {
@@ -76,6 +79,7 @@ class UtilityTest {
         var gson = Gson()
         protocol1 = ProtocolInfo(testPackage1, minVersionTestPackage1, packageProtocol)
         protocol2 = ProtocolInfo(testPackage2, minVersionTestPackage2, packageProtocol)
+        protocol3 = PlaystoreProtocol(testLink)
         return listOf(gson.toJson(protocol1), gson.toJson(protocol2))
     }
 
