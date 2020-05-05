@@ -232,23 +232,12 @@ completion handler will be called with null LoginSession and a GrabIdPartnerErro
 ```
 login(loginSession: LoginSession, context: Context, callback: (GrabIdPartnerError?) -> Unit)
 
-The login API will trigger the Grab web login flow, native app (Grab passenger app) login flow or launch the
-Playstore based on the configuration available in the client_public_info_endpoint in the discovery URL.
-To setup the native app OAuth flow please visit our developer site and configure your clientId accordingly.
-After the user successfully authorizes the application, Grab Id service will validate
-the redirect URL in the query parameter. If the redirect URL is registered with Grab Id service,
-Grab Id service will perform the redirect the browser back to the application with an authorization code, state,
-and error (if any) in the redirect query parameters. SDK will first attempt to launch Native app,
-if native app package is unavailable it will check the playstore link, if playstore link is not null it
-will attempt to launch and invoke the callback at onError with either of the following:
-    failedTolaunchAppStoreLink,     // Failed to launch the configured app store link
-    launchAppStoreLink,             // Launch the configured app store link
-Inorder to allow caller to handle appropriate action such as retry. If no playstore link is configured the SDK
-will call to launch in to chrome custom tabs to continue the login flow and eventually redirect
-back to caller application
-
-If Action to login was successful in terms of launching into native app or webflow: User will be
-notified by onSuccess() call
+The login API will trigger the Grab login flow. If the partner app is configured in client_public_info_endpoint (contained in the discovery URL) to take advantage of native app login state (i.e. PAX, DAX, MEX, etc.). The login API will proxy the authorization request to the native app instead of using default Grab web login flow. Partner can also configure to go to the app store instead of the Grab web login flow. In this case, partner will need to handle error for retry or cancel the Grab login request. To setup the native app OAuth flow please visit our developer site and configure your clientId accordingly. During OAuth flow after the user successfully authorizes the application, Grab Id service will validate the redirect URL in the query parameter with the registered redirect URL, if matches Grab Id service will perform the redirect back to the caller application with an authorization code, state, and error (if any) in the redirect query parameters.
+SDK will give native app as first priority to complete the OAuth flow if native app is configured for the clientId. If native app is not installed in the device and clientId has an appstore_link, then SDK will launch the corresponding app in the Google Play Store for user to install, and will notify the caller application by invoking the callback at onError with either of the following:
+    a. failedTolaunchAppStoreLink,     // Failed to launch the configured app store link
+    b. launchAppStoreLink,             // Launch the configured app store link
+Note: If any client app adds appstore_link configuration but user doesn't install the required native app, the OAuth flow will not be completed.
+For clients where native app is not installed and no appstore_link is configured then SDK will launch normal web flow to complete the OAuth.
 
 Completion Handler
 Null if no error, GrabIdPartnerError with error code and message otherwise.
