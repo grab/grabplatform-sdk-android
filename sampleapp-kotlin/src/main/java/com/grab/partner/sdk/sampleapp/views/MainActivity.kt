@@ -8,7 +8,6 @@
 
 package com.grab.partner.sdk.sampleapp.views
 
-import android.content.Intent
 import androidx.databinding.DataBindingUtil
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -22,24 +21,13 @@ import com.grab.partner.sdk.sampleapp.di.modules.SampleAppModule
 class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var mainActivityViewModel: MainActivityViewModel
-    private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        val binding =
+            DataBindingUtil.setContentView<ActivityMainBinding>(this, R.layout.activity_main)
         setUpDI()
         binding.vm = mainActivityViewModel
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        var action = intent.action
-        var redirectUrl = intent.dataString
-        if (Intent.ACTION_VIEW == action && redirectUrl != null) {
-            mainActivityViewModel.setRedirectUrl(redirectUrl)
-            // initiate the token exchange with GRAB ID Partner SDK
-            mainActivityViewModel.getToken()
-        }
     }
 
     private fun setUpDI() {

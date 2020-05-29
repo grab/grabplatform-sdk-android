@@ -51,4 +51,6 @@ dependencies {
     testImplementation junit
     // dependency on GrabIdPartnerSDK sdk
     implementation project(':GrabIdPartnerSDK')
+    // LeakCanary
+    debugImplementation leakcanary
 }

@@ -7,6 +7,8 @@ import com.grab.partner.sdk.LoginCallback
 import com.grab.partner.sdk.models.GrabIdPartnerErrorCode
 import com.grab.partner.sdk.models.GrabIdPartnerErrorDomain
 import com.grab.partner.sdk.models.LoginSession
+import com.grab.partner.sdk.repo.GrabIdPartnerRepo
+import com.grab.partner.sdk.wrapper.chrometabmanager.ChromeManagerActivityLauncher
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.argThat
 import com.nhaarman.mockitokotlin2.eq
@@ -20,7 +22,6 @@ import org.mockito.ArgumentMatchers.anyString
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
-
 
 @RunWith(PowerMockRunner::class)
 @PrepareForTest(Uri::class, Uri.Builder::class)
@@ -41,7 +42,14 @@ class LaunchAppForAuthorizationImplTest  {
     }
     private val callback: LoginCallback = mock()
     private var testProvider = TestIntentProvider()
-    private val launcher = LaunchAppForAuthorizationImpl()
+    private val chromeTabLauncher: ChromeTabLauncher = mock()
+    private val chromeManagerActivityLauncher: ChromeManagerActivityLauncher = mock()
+    private val grabIdPartnerRepo: GrabIdPartnerRepo = mock()
+    private val launcher = LaunchAppForAuthorizationImpl(
+        chromeTabLauncher,
+        chromeManagerActivityLauncher,
+        grabIdPartnerRepo
+    )
     private val uri = "https://github.com/thing/try"
     private val uri_authEndpoint = "https://github.com/auth/thing"
     private val uri_playstore = "https://playstore.com/thing/try"
@@ -168,6 +176,27 @@ class LaunchAppForAuthorizationImplTest  {
         whenever(context.packageManager).thenReturn(mock())
         whenever(testProvider.mockIntent.resolveActivity(any())).thenReturn(mock())
         launcher.launchOAuthFlow(context, loginSession, callback, false)
-        verify(callback).onSuccess()
+        verify(chromeTabLauncher).launchChromeTab(context, afterBuilderURI, callback)
+    }
+
+    @Test
+    fun LaunchOAuthFlow_Wrapper_Flow() {
+        loginSession.deeplinkUriInternal = uri
+        loginSession.authorizationEndpoint = uri_authEndpoint
+        loginSession.playstoreLinkInternal = ""
+        loginSession.isWrapperFlow = true
+        val mockURI: Uri = PowerMockito.mock(Uri::class.java)
+        val afterBuilderURI: Uri = PowerMockito.mock(Uri::class.java)
+        val mockBuilder = PowerMockito.mock(Uri.Builder::class.java)
+        PowerMockito.`when`(Uri.parse(eq(uri_authEndpoint))).thenReturn(mockURI)
+        PowerMockito.`when`(mockURI.buildUpon()).thenReturn(mockBuilder)
+        PowerMockito.`when`(mockBuilder.appendQueryParameter(anyString(), anyString())).thenReturn(mockBuilder)
+        PowerMockito.`when`(mockBuilder.build()).thenReturn(afterBuilderURI)
+        whenever(context.packageManager).thenReturn(mock())
+        whenever(testProvider.mockIntent.resolveActivity(any())).thenReturn(mock())
+        launcher.launchOAuthFlow(context, loginSession, callback, false)
+        verify(grabIdPartnerRepo).saveLoginCallback(callback)
+        verify(grabIdPartnerRepo).saveUri(afterBuilderURI)
+        verify(chromeManagerActivityLauncher).launchChromeManagerActivity(context)
     }
 }

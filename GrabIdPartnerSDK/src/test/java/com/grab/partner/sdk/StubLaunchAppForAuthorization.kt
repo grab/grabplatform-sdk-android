@@ -16,7 +16,4 @@ class StubLaunchAppForAuthorization : LaunchAppForAuthorization {
     override fun launchOAuthFlow(context: Context, loginSession: LoginSession, callback: LoginCallback, shouldLaunchNativeApp: Boolean) {
         callback.onSuccess()
     }
-
-    override fun speedUpChromeTabs() {
-    }
 }

@@ -8,12 +8,9 @@
 
 package com.grab.partner.sdk.utils
 
-import android.app.Application
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import androidx.browser.customtabs.CustomTabsClient
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.browser.customtabs.CustomTabsServiceConnection
@@ -25,6 +22,8 @@ import com.grab.partner.sdk.models.GrabIdPartnerError
 import com.grab.partner.sdk.models.GrabIdPartnerErrorCode
 import com.grab.partner.sdk.models.GrabIdPartnerErrorDomain
 import com.grab.partner.sdk.models.LoginSession
+import com.grab.partner.sdk.repo.GrabIdPartnerRepo
+import com.grab.partner.sdk.wrapper.chrometabmanager.ChromeManagerActivityLauncher
 
 internal interface LaunchAppForAuthorization {
     /**
@@ -32,22 +31,19 @@ internal interface LaunchAppForAuthorization {
      * if link is available or falling back to weblogin via Chrome Custom Tab
      */
     fun launchOAuthFlow(context: Context, loginSession: LoginSession, callback: LoginCallback, shouldLaunchNativeApp: Boolean = false)
-
-    /**
-     * Speed up Chrome tab
-     */
-    fun speedUpChromeTabs()
 }
 
-
-internal class LaunchAppForAuthorizationImpl : LaunchAppForAuthorization {
+internal class LaunchAppForAuthorizationImpl(
+    private val chromeTabLauncher: ChromeTabLauncher,
+    private val chromeManagerActivityLauncher: ChromeManagerActivityLauncher,
+    private val grabIdPartnerRepo: GrabIdPartnerRepo
+) : LaunchAppForAuthorization {
 
     // Chrome Custom Tab variables
     private var mClient: CustomTabsClient? = null
     private var mCustomTabsSession: CustomTabsSession? = null
     private lateinit var mCustomTabsServiceConnection: CustomTabsServiceConnection
     private lateinit var customTabsIntent: CustomTabsIntent
-    private val CUSTOM_TAB_PACKAGE_NAME = "com.android.chrome"
     internal var intentProvider: IntentProvider = IntentProviderImpl()
 
     /**
@@ -62,41 +58,37 @@ internal class LaunchAppForAuthorizationImpl : LaunchAppForAuthorization {
         if (shouldLaunchNativeApp) {
             // launch the deep link
             try {
-               return launchPartnerLogin(context, uri, loginSession, callback)
+                return launchPartnerLogin(context, uri, loginSession, callback)
             } catch (ex: Exception) {
                 //todo possibly add qem
             }
         }
 
-        //if playstore link is available force to playstore
-        if (loginSession.playstoreLink.isNotEmpty()) {
-            launchPlaystore(context, loginSession, callback)
-        } else {
-            try {
-                // launch chrome custom tab
-                launchChromeCustomTab(context, uri, callback)
-            } catch (ex: Exception) {
-                //can't do anything here, so sending the onError callback
-                callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LAUNCHOAUTHFLOW, GrabIdPartnerErrorCode.errorLaunchingChromeCustomTab, ex.localizedMessage, null))
+        when {
+            //if playstore link is available force to playstore
+            loginSession.playstoreLink.isNotEmpty() -> {
+                launchPlaystore(context, loginSession, callback)
             }
-        }
-    }
-
-    /**
-     * Speed up Chrome tab
-     */
-    override fun speedUpChromeTabs() {
-        mCustomTabsServiceConnection = object : CustomTabsServiceConnection() {
-            override fun onCustomTabsServiceConnected(componentName: ComponentName, customTabsClient: CustomTabsClient) {
-                //Pre-warming
-                mClient = customTabsClient
-                mClient?.warmup(0L)
-                mCustomTabsSession = mClient?.newSession(null)
-
+            loginSession.wrapperFlow -> {
+                grabIdPartnerRepo.saveLoginCallback(callback)
+                grabIdPartnerRepo.saveUri(uri)
+                chromeManagerActivityLauncher.launchChromeManagerActivity(context)
             }
-
-            override fun onServiceDisconnected(name: ComponentName) {
-                mClient = null
+            else -> {
+                try {
+                    // launch chrome custom tab
+                    chromeTabLauncher.launchChromeTab(context, uri, callback)
+                } catch (ex: Exception) {
+                    //can't do anything here, so sending the onError callback
+                    callback.onError(
+                        GrabIdPartnerError(
+                            GrabIdPartnerErrorDomain.LAUNCHOAUTHFLOW,
+                            GrabIdPartnerErrorCode.errorLaunchingChromeCustomTab,
+                            ex.localizedMessage,
+                            null
+                        )
+                    )
+                }
             }
         }
     }
@@ -138,25 +130,6 @@ internal class LaunchAppForAuthorizationImpl : LaunchAppForAuthorization {
             builder.appendQueryParameter("request", loginSession.request)
         }
         return builder.build()
-    }
-
-    private fun launchChromeCustomTab(context: Context, uri: Uri, callback: LoginCallback) {
-        // launch chrome custom tab
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            CustomTabsClient.bindCustomTabsService(context, CUSTOM_TAB_PACKAGE_NAME, mCustomTabsServiceConnection)
-
-            customTabsIntent = CustomTabsIntent.Builder(mCustomTabsSession)
-                    .setShowTitle(true)
-                    .build()
-
-            customTabsIntent.intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-            // if user is using the old login api and sending the application context then we have to add this FLAG_ACTIVITY_NEW_TASK flag
-            if (context is Application) {
-                customTabsIntent.intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-            customTabsIntent.launchUrl(context, uri)
-        }
-        callback.onSuccess()
     }
 
     private fun launchPartnerLogin(context: Context, uri: Uri, loginSession: LoginSession, callback: LoginCallback) {

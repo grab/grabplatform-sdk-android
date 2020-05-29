@@ -15,11 +15,14 @@ import com.grab.partner.sdk.keystore.AndroidKeyStoreWrapper
 import com.grab.partner.sdk.keystore.CipherWrapper
 import com.grab.partner.sdk.keystore.IAndroidKeyStoreWrapper
 import com.grab.partner.sdk.keystore.ICipher
+import com.grab.partner.sdk.repo.GrabIdPartnerRepo
 import com.grab.partner.sdk.scheduleprovider.SchedulerProvider
+import com.grab.partner.sdk.utils.ChromeTabLauncher
 import com.grab.partner.sdk.utils.LaunchAppForAuthorizationImpl
 import com.grab.partner.sdk.utils.LaunchAppForAuthorization
 import com.grab.partner.sdk.utils.IUtility
 import com.grab.partner.sdk.utils.Utility
+import com.grab.partner.sdk.wrapper.chrometabmanager.ChromeManagerActivityLauncher
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -28,7 +31,16 @@ import javax.inject.Singleton
 internal class AppModule(private var context: Context) {
     @Provides
     @Singleton
-    fun provideLaunchAppForAuthorization(): LaunchAppForAuthorization = LaunchAppForAuthorizationImpl()
+    fun provideLaunchAppForAuthorization(
+        chromeTabLauncher: ChromeTabLauncher,
+        chromeManagerActivityLauncher: ChromeManagerActivityLauncher,
+        grabIdPartnerRepo: GrabIdPartnerRepo
+    ): LaunchAppForAuthorization =
+        LaunchAppForAuthorizationImpl(
+            chromeTabLauncher,
+            chromeManagerActivityLauncher,
+            grabIdPartnerRepo
+        )
 
     @Provides
     @Singleton
