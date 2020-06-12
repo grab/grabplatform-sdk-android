@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) Grab Taxi Holdings PTE LTD (GRAB)
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
 package com.grab.partner.sdk.wrapper.manager
 
 import android.content.Context
@@ -11,24 +18,22 @@ interface GrabSdkManager {
 
     class Builder {
 
-        var clientId: String = EMPTY_STRING_CONST
-        var redirectURI: String = EMPTY_STRING_CONST
-        var serviceDiscoveryUrl: String = EMPTY_STRING_CONST
-        var scope: String = EMPTY_STRING_CONST
+        internal var clientId: String = EMPTY_STRING_CONST
+        internal var redirectURI: String = EMPTY_STRING_CONST
+        internal var serviceDiscoveryUrl: String = EMPTY_STRING_CONST
+        internal var scope: String = EMPTY_STRING_CONST
         // Used by app for one time transactions scenario - base64 encoded jwt
-        var request: String? = EMPTY_STRING_CONST
-        var loginHint: String? = EMPTY_STRING_CONST
-        var idTokenHint: String? = EMPTY_STRING_CONST
-        var prompt: String? = EMPTY_STRING_CONST
+        internal var request: String? = EMPTY_STRING_CONST
+        internal var loginHint: String? = EMPTY_STRING_CONST
+        internal var idTokenHint: String? = EMPTY_STRING_CONST
+        internal var prompt: String? = EMPTY_STRING_CONST
         // The OpenID Connect ACR optional parameter to the authorize endpoint will be utilized to pass in
         // service id info and device ID
-        var acrValues: String? = EMPTY_STRING_CONST
-
-        var listener: SessionCallbacks? = null
-
-        var exchangeRequired: Boolean = false
-        lateinit var loginSession: LoginSession
-        lateinit var state: String
+        internal var acrValues: String? = EMPTY_STRING_CONST
+        internal var listener: SessionCallbacks? = null
+        internal var exchangeRequired: Boolean = false
+        internal lateinit var loginSession: LoginSession
+        internal lateinit var state: String
 
         fun clientId(clientId: String): Builder {
             this.clientId = clientId

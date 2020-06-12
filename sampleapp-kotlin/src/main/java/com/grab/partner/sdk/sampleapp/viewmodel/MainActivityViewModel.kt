@@ -9,15 +9,12 @@
 package com.grab.partner.sdk.sampleapp.viewmodel
 
 import android.app.Activity
-import androidx.databinding.ObservableField
-import androidx.databinding.ObservableInt
 import android.text.method.ScrollingMovementMethod
 import android.view.View
-import com.grab.partner.sdk.ExchangeTokenCallback
+import androidx.databinding.ObservableField
+import androidx.databinding.ObservableInt
 import com.grab.partner.sdk.GetIdTokenInfoCallback
 import com.grab.partner.sdk.GrabIdPartner
-import com.grab.partner.sdk.LoginCallbackV2
-import com.grab.partner.sdk.LoginSessionCallback
 import com.grab.partner.sdk.LogoutCallback
 import com.grab.partner.sdk.models.GrabIdPartnerError
 import com.grab.partner.sdk.models.IdTokenInfo
@@ -26,23 +23,22 @@ import com.grab.partner.sdk.sampleapp.R
 import com.grab.partner.sdk.sampleapp.api.GrabRepository
 import com.grab.partner.sdk.sampleapp.models.UserInfoAPIResponse
 import com.grab.partner.sdk.sampleapp.scheduleprovider.SchedulerProvider
+import com.grab.partner.sdk.wrapper.manager.GrabSdkManager
+import com.grab.partner.sdk.wrapper.manager.SessionCallbacks
 import retrofit2.HttpException
 
-class MainActivityViewModel(private val activity: Activity,
-                            private val grabRepository: GrabRepository,
-                            private val schedulerProvider: SchedulerProvider) {
+class MainActivityViewModel(
+    private val activity: Activity,
+    private val grabRepository: GrabRepository,
+    private val schedulerProvider: SchedulerProvider
+) : SessionCallbacks {
     companion object {
         private var loginSession: LoginSession? = null
     }
 
-    private lateinit var redirectUrl: String
     var progressBarVisibility = ObservableInt(View.GONE)
     var stringMessage = ObservableField<String>()
     var movementMethod: ScrollingMovementMethod = ScrollingMovementMethod()
-
-    fun setRedirectUrl(url: String) {
-        this.redirectUrl = url
-    }
 
     /**
      * To initiate the login process with Grab ID Partner SDK
@@ -50,59 +46,15 @@ class MainActivityViewModel(private val activity: Activity,
     fun clickLogin() {
         progressBarVisibility.set(View.VISIBLE)
         stringMessage.set("")
-        GrabIdPartner.instance.loadLoginSession(object : LoginSessionCallback {
-            override fun onSuccess(loginSession: LoginSession) {
-                MainActivityViewModel.loginSession = loginSession
-                GrabIdPartner.instance.loginV2(loginSession, activity, object : LoginCallbackV2 {
-                    override fun onSuccess() {
-                        if (loginSession.accessToken.isNotEmpty()) {
-                            stringMessage.set(createTokenResponse(loginSession))
-                            progressBarVisibility.set(View.GONE)
-                        }
-                    }
+        val sdkManager = GrabSdkManager.Builder().clientId("[obtain from GrabId team]")
+            .redirectURI("[obtain from GrabId team]")
+            .scope("[obtain from GrabId team]")
+            .serviceDiscoveryUrl("[obtain from GrabId team]")
+            .listener(this)
+            .exchangeRequired(true)
+            .build(activity)
 
-                    override fun onError(grabIdPartnerError: GrabIdPartnerError) {
-                        setErrorState(grabIdPartnerError)
-                    }
-
-                    override fun onSuccessCache() {
-                        if (loginSession.accessToken.isNotEmpty()) {
-                            stringMessage.set(createTokenResponse(loginSession))
-                            progressBarVisibility.set(View.GONE)
-                        }
-                    }
-                })
-            }
-
-            override fun onError(grabIdPartnerError: GrabIdPartnerError) {
-                setErrorState(grabIdPartnerError)
-            }
-        })
-    }
-
-    /**
-     * To initiate the exchange token flow with Grab ID Partner SDK
-     */
-    fun getToken() {
-        progressBarVisibility.set(View.VISIBLE)
-        if (loginSession != null) {
-            loginSession?.let { loginSession ->
-                GrabIdPartner.instance.exchangeToken(loginSession, redirectUrl, object : ExchangeTokenCallback {
-                    override fun onSuccess() {
-                        stringMessage.set(createTokenResponse(loginSession))
-                        progressBarVisibility.set(View.GONE)
-                    }
-
-                    override fun onError(grabIdPartnerError: GrabIdPartnerError) {
-                        setErrorState(grabIdPartnerError)
-                    }
-
-                })
-            }
-        } else {
-            stringMessage.set("Please initiate login flow first, loginSession is null")
-            progressBarVisibility.set(View.GONE)
-        }
+        sdkManager.doLogin(activity, "[obtain from GrabId team]")
     }
 
     /**
@@ -132,9 +84,8 @@ class MainActivityViewModel(private val activity: Activity,
      * To initiate the logout/clear loginSession process
      */
     fun clearGrabSignInSession() {
-        var loginSession = loginSession
         loginSession?.let {
-            GrabIdPartner.instance.logout(loginSession, object : LogoutCallback {
+            GrabIdPartner.instance.logout(it, object : LogoutCallback {
                 override fun onSuccess() {
                     stringMessage.set("Successfully cleared loginSession for the user")
                 }
@@ -183,6 +134,22 @@ class MainActivityViewModel(private val activity: Activity,
 
     private fun setErrorState(grabIdPartnerError: GrabIdPartnerError){
         stringMessage.set("Localized Message: " + grabIdPartnerError.localizeMessage + "\nService error: " + grabIdPartnerError.serviceError?.localizedMessage)
+        progressBarVisibility.set(View.GONE)
+    }
+
+    override fun onSuccess(loginSession: LoginSession) {
+        MainActivityViewModel.loginSession = loginSession
+        stringMessage.set(createTokenResponse(loginSession))
+        progressBarVisibility.set(View.GONE)
+    }
+
+    override fun onError(grabIdPartnerError: GrabIdPartnerError) {
+        setErrorState(grabIdPartnerError)
+    }
+
+    override fun onSuccessFromCache(loginSession: LoginSession) {
+        MainActivityViewModel.loginSession = loginSession
+        stringMessage.set(createTokenResponse(loginSession))
         progressBarVisibility.set(View.GONE)
     }
 }

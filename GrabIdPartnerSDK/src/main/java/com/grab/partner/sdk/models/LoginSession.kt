@@ -31,6 +31,10 @@ class LoginSession {
     /****************************************************************
     // parameters to be set by GrabId Partner SDK
      ****************************************************************/
+    // to differentiate between SDK wrapper flow vs regular GrabIdPartner API call by client app
+    internal var isWrapperFlow: Boolean = false
+    val wrapperFlow get() = isWrapperFlow
+
     internal var codeInternal: String = EMPTY_STRING_CONST
     val code get() = codeInternal
 

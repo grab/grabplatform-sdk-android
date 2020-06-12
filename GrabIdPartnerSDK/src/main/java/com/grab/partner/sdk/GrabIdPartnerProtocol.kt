@@ -33,7 +33,7 @@ interface GrabIdPartnerProtocol {
      * Note: com.grab.partner.sdk.GrabIdPartnerProtocol.initialize(android.content.Context, com.grab.partner.sdk.InitializeCallback) should be invoked first.
      */
     fun loadLoginSession(state: String, clientId: String, redirectUri: String, serviceDiscoveryUrl: String,
-                         scope: String, acrValues: String?, request: String?, loginHint: String?, idTokenHint: String?, callback: LoginSessionCallback, prompt: String? = "")
+                         scope: String, acrValues: String?, request: String?, loginHint: String?, idTokenHint: String?, callback: LoginSessionCallback, prompt: String? = "", isWrapperFlow: Boolean = false)
 
     @Deprecated(message = "Usages of this API is deprecated", replaceWith = ReplaceWith("com.grab.partner.sdk.GrabIdPartnerProtocol.loginV2"))
     fun login(loginSession: LoginSession, context: Context, callback: LoginCallback)

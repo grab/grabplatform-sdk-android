@@ -33,6 +33,7 @@ import com.grab.partner.sdk.R.string.ERROR_STATE_MISMATCH
 import com.grab.partner.sdk.R.string.URL_INVOKED
 import com.grab.partner.sdk.api.GrabAuthRepository
 import com.grab.partner.sdk.di.components.DaggerMainComponent
+import com.grab.partner.sdk.di.components.MainComponent
 import com.grab.partner.sdk.di.modules.AppModule
 import com.grab.partner.sdk.keystore.AndroidKeyStoreWrapper
 import com.grab.partner.sdk.keystore.CipherWrapper
@@ -91,6 +92,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
 
     companion object {
         val instance: GrabIdPartnerProtocol by lazy { Holder.INSTANCE }
+        internal lateinit var mainComponent: MainComponent
         internal var isSdkInitialized: Boolean = false
         internal const val CODE_CHALLENGE_METHOD: String = "S256"
         internal const val RESPONSE_TYPE: String = "code"
@@ -117,14 +119,13 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
 
             cipherWrapper = CipherWrapper()
             // Dependency injection
-            val component = DaggerMainComponent
+            mainComponent = DaggerMainComponent
                     .builder()
                     .appModule(AppModule(context))
                     .build()
 
-            component.inject(this)
+            mainComponent.inject(this)
             compositeDisposable = CompositeDisposable()
-            launchAppForAuthorization.speedUpChromeTabs()
             isSdkInitialized = true
             callback?.onSuccess()
         } catch (exception: Exception) {
@@ -194,12 +195,31 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         callback.onSuccess(loginSession)
     }
 
-    override fun loadLoginSession(state: String, clientId: String, redirectUri: String, serviceDiscoveryUrl: String,
-                                  scope: String, acrValues: String?, request: String?, loginHint: String?, idTokenHint: String?, callback:
-                                  LoginSessionCallback, prompt: String?) {
+    override fun loadLoginSession(
+        state: String,
+        clientId: String,
+        redirectUri: String,
+        serviceDiscoveryUrl: String,
+        scope: String,
+        acrValues: String?,
+        request: String?,
+        loginHint: String?,
+        idTokenHint: String?,
+        callback:
+        LoginSessionCallback,
+        prompt: String?,
+        isWrapperFlow: Boolean
+    ) {
         // verify SDK has been initialized
         if (!isSdkInitialized) {
-            callback.onError(GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.sdkNotInitialized, utility.readResourceString(applicationContext, ERROR_SDK_IS_NOT_INITIALIZED), null))
+            callback.onError(
+                GrabIdPartnerError(
+                    GrabIdPartnerErrorDomain.LOADLOGINSESSION,
+                    GrabIdPartnerErrorCode.sdkNotInitialized,
+                    utility.readResourceString(applicationContext, ERROR_SDK_IS_NOT_INITIALIZED),
+                    null
+                )
+            )
             return
         }
         val loginSession = LoginSession()
@@ -236,6 +256,7 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
             loginSession.scope = scope
         }
 
+        loginSession.isWrapperFlow = isWrapperFlow
         loginSession.acrValues = acrValues ?: ""
         loginSession.request = request ?: ""
         loginSession.loginHint = loginHint ?: ""

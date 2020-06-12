@@ -42,7 +42,20 @@ internal open class StubGrabIdPartner : GrabIdPartnerProtocol {
         }
     }
 
-    override fun loadLoginSession(state: String, clientId: String, redirectUri: String, serviceDiscoveryUrl: String, scope: String, acrValues: String?, request: String?, loginHint: String?, idTokenHint: String?, callback: LoginSessionCallback, prompt: String?) {
+    override fun loadLoginSession(
+        state: String,
+        clientId: String,
+        redirectUri: String,
+        serviceDiscoveryUrl: String,
+        scope: String,
+        acrValues: String?,
+        request: String?,
+        loginHint: String?,
+        idTokenHint: String?,
+        callback: LoginSessionCallback,
+        prompt: String?,
+        isWrapperFlow: Boolean
+    ) {
         if (callbackStatus) {
             callback.onError(settableError)
         } else {
