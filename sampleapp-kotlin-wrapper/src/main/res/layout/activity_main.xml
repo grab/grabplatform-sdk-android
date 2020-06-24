@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  ~ Copyright (c) Grab Taxi Holdings PTE LTD (GRAB)
+  ~
+  ~ This source code is licensed under the MIT license found in the
+  ~ LICENSE file in the root directory of this source tree.
+  ~
+  -->
+
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+    <data>
+        <import type="android.view.View"/>
+        <variable
+                name="vm"
+                type="com.grab.partner.sdk.sampleappkotlin.wrapper.viewmodel.MainActivityViewModel"/>
+
+    </data>
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+            <Button
+                    android:id="@+id/loginbutton"
+                    style="@style/FontMedium_Normal"
+                    android:background="@drawable/rounded_grey_bg"
+                    android:textColor="@color/color_greeen"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/button_margin"
+                    android:onClick="@{()-> vm.clickLogin()}"
+                    android:text="@string/login_button_text"/>
+
+            <Button
+                    android:id="@+id/validateTokenButton"
+                    style="@style/FontMedium_Normal"
+                    android:background="@drawable/rounded_grey_bg"
+                    android:textColor="@color/color_greeen"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/button_margin"
+                    android:onClick="@{()-> vm.getIdTokenInfo()}"
+                    android:text="@string/validate_token_button_text"/>
+
+            <Button
+                    android:id="@+id/accessProtectedResource"
+                    style="@style/FontMedium_Normal"
+                    android:background="@drawable/rounded_grey_bg"
+                    android:textColor="@color/color_greeen"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/button_margin"
+                    android:onClick="@{()-> vm.accessProtectedResource()}"
+                    android:text="@string/access_protected_resource"/>
+
+            <Button
+                    android:id="@+id/logout"
+                    style="@style/FontMedium_Normal"
+                    android:background="@drawable/rounded_grey_bg"
+                    android:textColor="@color/color_greeen"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/button_margin"
+                    android:onClick="@{()-> vm.clearGrabSignInSession()}"
+                    android:text="@string/logout_button_text"/>
+        </LinearLayout>
+        <RelativeLayout
+                android:id="@+id/progressBarlayout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="@{vm.progressBarVisibility}" >
+
+            <ProgressBar
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:indeterminateDrawable="@drawable/progress"
+                    android:layout_centerInParent="true" />
+        </RelativeLayout>
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+            <TextView
+                    android:id="@+id/defaulttextview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:padding="8dp"
+                    android:scrollbars="vertical"
+                    app:scrollable="@{vm.movementMethod}"
+                    android:text="@{vm.stringMessage}"/>
+        </LinearLayout>
+    </LinearLayout>
+</layout>

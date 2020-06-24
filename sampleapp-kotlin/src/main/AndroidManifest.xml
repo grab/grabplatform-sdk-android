@@ -1,4 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Copyright (c) Grab Taxi Holdings PTE LTD (GRAB)
+  ~
+  ~ This source code is licensed under the MIT license found in the
+  ~ LICENSE file in the root directory of this source tree.
+  ~
+  -->
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.grab.partner.sdk.sampleapp">
 
@@ -11,9 +18,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/GrabIdPartnerSDKTheme">
+
         <activity
-            android:name="com.grab.partner.sdk.wrapper.deeplink.DeepLinkActivity"
+            android:name=".views.MainActivity"
             android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -26,13 +38,35 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".views.MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
+        <meta-data
+            android:name="com.grab.partner.sdk.ClientId"
+            android:value="[obtain from GrabId team]" />
+        <meta-data
+            android:name="com.grab.partner.sdk.RedirectURI"
+            android:value="[Redirect Url must register with Grab Id team during partner application registration process]" />
+        <meta-data
+            android:name="com.grab.partner.sdk.Scope"
+            android:value="[obtain from GrabId team]" />
+        <meta-data
+            android:name="com.grab.partner.sdk.AcrValues"
+            android:value="" />
+        <meta-data
+            android:name="com.grab.partner.sdk.Request"
+            android:value="" />
+        <meta-data
+            android:name="com.grab.partner.sdk.LoginHint"
+            android:value="" />
+        <meta-data
+            android:name="com.grab.partner.sdk.IDTokenHint"
+            android:value="" />
+        <meta-data
+            android:name="com.grab.partner.sdk.Prompt"
+            android:value="" />
+        <meta-data
+            android:name="com.grab.partner.sdk.ServiceDiscoveryUrl"
+            android:value="[obtain from GrabId team]" />
+        <meta-data
+            android:name="com.grab.partner.sdk.protectedResource"
+            android:value="" />
     </application>
-
 </manifest>

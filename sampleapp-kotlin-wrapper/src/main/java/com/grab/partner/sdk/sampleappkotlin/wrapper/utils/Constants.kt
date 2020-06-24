@@ -6,4 +6,6 @@
  *
  */
 
-include ':GrabIdPartnerSDK', ':sampleapp-kotlin', ':sampleapp-java', ':sampleapp-kotlin-wrapper'
+package com.grab.partner.sdk.sampleappkotlin.wrapper.utils
+
+const val PROTECTED_RESOURCE_ENDPOINT_ATTRIBUTE="com.grab.partner.sdk.protectedResource"

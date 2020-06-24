@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Grab Taxi Holdings PTE LTD (GRAB)
+  ~
+  ~ This source code is licensed under the MIT license found in the
+  ~ LICENSE file in the root directory of this source tree.
+  ~
+  -->
+
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="color_24bd64">#24bd64</color>
+    <color name="color_white">#FFFFFF</color>
+    <color name="color_greeen">#00B140</color>
+    <color name="color_f7f7f7">#F7F7F7</color>
+    <color name="color_444a57">#444A57</color>
+    <color name="color_252525">#252525</color>
+</resources>

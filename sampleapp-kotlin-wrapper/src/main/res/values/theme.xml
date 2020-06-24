@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Grab Taxi Holdings PTE LTD (GRAB)
+  ~
+  ~ This source code is licensed under the MIT license found in the
+  ~ LICENSE file in the root directory of this source tree.
+  ~
+  -->
+
+<resources>
+    <!-- Base application theme. -->
+    <style name="GrabIdPartnerSDKTheme" parent="Theme.AppCompat.Light">
+        <!-- This is the styling for action bar -->
+        <item name="actionBarStyle">@style/GrabIdPartnerSDKActionBar</item>
+    </style>
+
+    <style name="GrabIdPartnerSDKActionBar" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
+        <item name="background">@color/color_greeen</item>
+        <item name="titleTextStyle">@style/GrabIdPartnerSDKActionBarTitle</item>
+    </style>
+
+    <style name="GrabIdPartnerSDKActionBarTitle" parent="@style/TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textColor">@color/color_white</item>
+    </style>
+
+    <style name="FontMedium_Normal">
+        <item name="android:textSize">16sp</item>
+    </style>
+</resources>
