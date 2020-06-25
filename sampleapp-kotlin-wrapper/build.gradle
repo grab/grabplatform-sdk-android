@@ -1,0 +1,73 @@
+/*
+ * Copyright (c) Grab Taxi Holdings PTE LTD (GRAB)
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
+
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'kotlin-android-extensions'
+apply from: '../dependencies.gradle'
+
+android {
+    compileSdkVersion appCompileSdkVersion
+    buildToolsVersion buildToolsVersion
+
+    dataBinding {
+        enabled = true
+    }
+
+    defaultConfig {
+        applicationId "com.grab.partner.sdk.sampleappkotlin.wrapper"
+        minSdkVersion minSdkSupportedVersion
+        targetSdkVersion maxSdkSupportedVersion
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation kotlin
+    implementation appcompat
+    implementation constraintlayout
+
+    // Dagger 2
+    implementation dagger
+    kapt daggercompiler
+
+    // retrofit
+    implementation retrofit
+    implementation retrofitrx
+    implementation convertergson
+
+    // rxandroid
+    implementation rxandroid
+    implementation rxkotlin
+
+    //Logging Interceptor
+    implementation okhttplogging
+    // dependency on GrabIdPartnerSDK sdk
+    implementation project(':GrabIdPartnerSDK')
+    // LeakCanary
+    debugImplementation leakcanary
+}

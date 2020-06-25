@@ -7,7 +7,7 @@
   -->
 
 <resources>
-    <string name="app_name">GrabIdPartnerSDK-Kotlin</string>
+    <string name="app_name">GrabIdPartnerSDK-Kotlin-Wrapper</string>
     <string name="login_button_text">Continue with Grab</string>
     <string name="validate_token_button_text">Get Id Token Info</string>
     <string name="access_protected_resource">Access Protected Resource</string>

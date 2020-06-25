@@ -6,4 +6,6 @@
  *
  */
 
-include ':GrabIdPartnerSDK', ':sampleapp-kotlin', ':sampleapp-java', ':sampleapp-kotlin-wrapper'
+package com.grab.partner.sdk.sampleappkotlin.wrapper.models
+
+data class UserInfoAPIResponse(val userID: String, val serviceID: String, val serviceUserID: Long, val authMethod: String)
