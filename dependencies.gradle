@@ -11,7 +11,7 @@ ext {
     appApplicationId = "com.blockchain"
     appVersion = 1
     appVersionName = "1.0"
-    sdkVersion = '2.0.4' // Current version of .aar in JCenter
+    sdkVersion = '2.0.5' // Current version of .aar in JCenter
     appcompat_version = '1.1.0'
     corektx_version = '1.1.0-alpha04'
     preference_version =  '1.1.0'
