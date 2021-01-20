@@ -339,6 +339,7 @@ invalidResponse,                // Unexpected response from GrabId service
 errorInLogout                   // Error in logout operation
 failedTolaunchAppStoreLink,     // Failed to launch the configured app store link
 launchAppStoreLink,             // Launch the configured app store link
+loginCancelledByUser,           // user cancelled login flow by closing the Chrome tab
 ```
 
 ## License
