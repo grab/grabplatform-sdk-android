@@ -32,4 +32,5 @@
     <string name="ERROR_LOGIN_SESSION_NULL">Supplied loginSession is null</string>
     <string name="ERROR_MISSING_TOKEN_ENDPOINT_IN_LOGINSESSION">Supplied loginSession does not have any token exchange endpoint</string>
     <string name="ERROR_MISSING_ID_TOKEN_VERIFICATION_ENDPOINT_IN_LOGINSESSION">Supplied loginSession does not have any ID token verification endpoint</string>
+    <string name="ERROR_USER_CANCELLED_LOGIN_FLOW">User cancelled the OAuth login flow</string>
 </resources>

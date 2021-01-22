@@ -7,6 +7,7 @@
  */
 package com.grab.partner.sdk.wrapper.di
 
+import com.grab.partner.sdk.wrapper.chrometabmanager.ChromeManagerActivity
 import com.grab.partner.sdk.wrapper.manager.GrabSdkManagerImpl
 import dagger.Component
 import javax.inject.Singleton
@@ -15,4 +16,6 @@ import javax.inject.Singleton
 @Component(modules = [WrapperModule::class])
 interface WrapperComponent {
     fun inject(manager: GrabSdkManagerImpl)
+    fun inject(activity: ChromeManagerActivity)
+
 }

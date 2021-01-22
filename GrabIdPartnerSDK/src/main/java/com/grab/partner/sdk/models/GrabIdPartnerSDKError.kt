@@ -40,9 +40,10 @@ enum class GrabIdPartnerErrorCode {
     errorInLogout,                  // Error in logout operation
     errorInInitialize,              // Error in initialize
     errorInTearDown,                // Error in teardown
-    errorLaunchingChromeCustomTab,   // Error launching oauth flow using Chrome custom tab
+    errorLaunchingChromeCustomTab,  // Error launching oauth flow using Chrome custom tab
     failedTolaunchAppStoreLink,     // Failed to launch the configured app store link
-    launchAppStoreLink, //Launch the configured app store link
+    launchAppStoreLink,             //Launch the configured app store link
+    loginCancelledByUser,           // user cancelled login flow by closing the Chrome tab
 }
 
 class GrabIdPartnerError(grabIdPartnerErrorDomain: GrabIdPartnerErrorDomain, code: GrabIdPartnerErrorCode, localizeMessage: String?, serviceError: Throwable?) {

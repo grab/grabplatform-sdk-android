@@ -23,6 +23,7 @@ internal const val CUSTOM_TAB_PACKAGE_NAME = "com.android.chrome"
 
 internal interface ChromeTabLauncher {
     fun launchChromeTab(context: Context, uri: Uri, callback: LoginCallback?)
+    fun unbindChromeServiceConnection(context: Context)
 }
 
 internal class ChromeTabLauncherImpl : ChromeTabLauncher {
@@ -72,5 +73,12 @@ internal class ChromeTabLauncherImpl : ChromeTabLauncher {
             customTabsIntent.launchUrl(context, uri)
         }
         callback?.onSuccess()
+    }
+
+    /**
+     * unbind mCustomTabsServiceConnection to avoid any memory leak
+     */
+    override fun unbindChromeServiceConnection(context: Context) {
+        context.unbindService(mCustomTabsServiceConnection)
     }
 }
