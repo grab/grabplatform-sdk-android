@@ -1,17 +1,17 @@
 ext {
-    kotlin_version = '1.3.40'
-    gradle_version = '3.5.3'
+    kotlin_version = '1.4.21'
+    gradle_version = '4.0.1'
     gradle_bintray_plugin_version = '1.7.3'
     android_maven_gradle_plugin_version = '1.5'
     rxkotlin_version = '2.4.0'
     minSdkSupportedVersion = 19
-    maxSdkSupportedVersion = 29
+    maxSdkSupportedVersion = 30
     appCompileSdkVersion = 29
     buildToolsVersion = "28.0.3"
     appApplicationId = "com.blockchain"
     appVersion = 1
     appVersionName = "1.0"
-    sdkVersion = '2.0.6' // Current version of .aar in JCenter
+    sdkVersion = '2.0.7' // Current version of .aar in JCenter
     appcompat_version = '1.1.0'
     corektx_version = '1.1.0-alpha04'
     preference_version =  '1.1.0'

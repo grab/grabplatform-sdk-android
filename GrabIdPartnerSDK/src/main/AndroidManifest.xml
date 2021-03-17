@@ -9,6 +9,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.grab.partner.sdk">
 
+    <queries>
+        <package android:name="com.grabtaxi.passenger" />
+        <package android:name="com.grabtaxi.passenger.beta" />
+    </queries>
+
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application>
