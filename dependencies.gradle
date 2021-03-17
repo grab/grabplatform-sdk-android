@@ -6,7 +6,7 @@ ext {
     rxkotlin_version = '2.4.0'
     minSdkSupportedVersion = 19
     maxSdkSupportedVersion = 30
-    appCompileSdkVersion = 29
+    appCompileSdkVersion = 30
     buildToolsVersion = "28.0.3"
     appApplicationId = "com.blockchain"
     appVersion = 1
