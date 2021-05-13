@@ -1,0 +1,113 @@
+/*
+ * Copyright (c) Grab Taxi Holdings PTE LTD (GRAB)
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
+
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+// WARNING: THIS PUBLISHES AS OPEN SOURCE
+
+group = publishedGroupId // Maven Group ID for the artifact
+version = libraryVersion
+
+if (project.hasProperty("kotlin")) { //Kotlin libraries
+    task sourcesJar(type: Jar) {
+        classifier = 'sources'
+        from android.sourceSets.main.java.srcDirs
+    }
+
+    task javadoc(type: Javadoc, dependsOn: dokka) {
+    }
+} else if (project.hasProperty("android")) { // Android libraries
+    task sourcesJar(type: Jar) {
+        classifier = 'sources'
+        from android.sourceSets.main.java.srcDirs
+    }
+
+    task javadoc(type: Javadoc) {
+        source = android.sourceSets.main.java.srcDirs
+        classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    }
+} else { // Java libraries
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                groupId publishedGroupId
+                artifactId artifact
+                version libraryVersion
+                if (project.plugins.findPlugin("com.android.library")) {
+                    from components.release
+                }
+
+                artifact sourcesJar
+                artifact javadocJar
+
+                pom {
+                    name = libraryName
+                    description = libraryDescription
+                    url = siteUrl
+
+                    licenses {
+                        license {
+                            name = licenseName
+                            url = licenseUrl
+                        }
+                    }
+                    scm {
+                        connection = gitUrl
+                        developerConnection = gitUrl
+                        url = siteUrl
+                    }
+                    developers {
+                        developer {
+                            id = 'chadwinvonburgess'
+                            name = 'Chad Burgess'
+                            email = 'chad.burgess@grabtaxi.com'
+                        }
+                        developer {
+                            id = 'pritamkarmakar'
+                            name = 'Pritam Karmakar'
+                            email = 'pritam83@gmail.com'
+                        }
+                        developer {
+                            id = 'jillyn-grab'
+                            name = 'Jillyn Johnson'
+                            email = 'jillyn.johnson@grabtaxi.com'
+                        }
+                    }
+                    withXml {
+                        asNode().dependencies.'*'.findAll() {
+                            it.scope.text() == 'runtime'
+                        }.each { it.scope*.value = 'compile'}
+                    }
+                }
+            }
+        }
+    }
+}
+
+signing {
+    sign publishing.publications
+}

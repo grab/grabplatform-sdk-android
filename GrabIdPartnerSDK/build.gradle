@@ -42,10 +42,6 @@ android {
 }
 
 ext {
-    bintrayRepo =  project.getName()
-    bintrayName =  project.getName()
-    bintrayUserOrg = 'grab'
-
     publishedGroupId = 'com.grab.grabidpartnersdk'
     libraryName =  project.getName()
     artifact =  project.getName()
@@ -56,47 +52,46 @@ ext {
     gitUrl = 'https://github.com/grab/grabidpartnersdk-android.git'
     githubRepository= 'grab/grabplatform-sdk-android'
 
-    libraryVersion = sdkVersion // Current version of .aar in JCenter
+    libraryVersion = '2.0.9' // Current version of .aar in JCenter
 
     licenseName = 'The MIT License'
     licenseUrl = 'https://opensource.org/licenses/MIT'
     allLicenses = ["MIT"]
 }
 
-    dependencies {
-        implementation fileTree(dir: 'libs', include: ['*.jar'])
-        implementation appcompat
-        implementation preferenceLibrary
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation appcompat
+    implementation preferenceLibrary
 
-        // Kotlin
-        implementation kotlin
+    // Kotlin
+    implementation kotlin
 
-        // Dagger 2
-        implementation dagger
-        kapt daggercompiler
+    // Dagger 2
+    implementation dagger
+    kapt daggercompiler
 
-        // retrofit
-        implementation retrofit
-        implementation retrofitrx
-        implementation convertergson
+    // retrofit
+    implementation retrofit
+    implementation retrofitrx
+    implementation convertergson
 
-        // rxandroid
-        implementation rxandroid
-        implementation rxkotlin
+    // rxandroid
+    implementation rxandroid
+    implementation rxkotlin
 
-        // Chrome custom tab
-        implementation chromecustomtab
+    // Chrome custom tab
+    implementation chromecustomtab
 
-        //Logging Interceptor
-        implementation okhttplogging
+    //Logging Interceptor
+    implementation okhttplogging
 
-        // unit tests
-        testImplementation junit
-        testImplementation powermock
-        testImplementation powermockapi
-        testImplementation mockitokotlin
-    }
+    // unit tests
+    testImplementation junit
+    testImplementation powermock
+    testImplementation powermockapi
+    testImplementation mockitokotlin
+}
 
-//gradle files to publish the .aar to Bintray
-apply from: './libs/install.gradle'
-apply from: './libs/bintray.gradle'
+//gradle file to publish the .aar
+apply from: './scripts/publish.gradle'
