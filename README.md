@@ -1,5 +1,4 @@
 # GrabID Partner SDK - Android
-[ ![Download](https://api.bintray.com/packages/grab/GrabIdPartnerSDK/GrabIdPartnerSDK/images/download.svg) ](https://bintray.com/grab/GrabIdPartnerSDK/GrabIdPartnerSDK/_latestVersion)
 
 The GrabId Partner SDK allows users to sign in with their Grab account from third-party apps.
 
@@ -17,7 +16,12 @@ To run the example project, clone the repo, and run the app in the emulator and 
 
 ## Installation GrabID Partner SDK
 
-Add dependency in your `build.gradle` file as `implementation 'com.grab.grabidpartnersdk:GrabIdPartnerSDK:x.x.x'`. GrabID Partner SDK is available in JCenter repository.
+Add dependency in your `build.gradle` file as `implementation 'com.grab.grabidpartnersdk:GrabIdPartnerSDK:x.x.x'`. 
+
+For versions 2.0.9+, GrabID Partner SDK is available in MavenCentral repository.
+For versions 1.1 - 2.0.6, GrabID Partner SDK is available in JCenter repository.
+
+Note: versions 2.0.6 and 2.0.9 are the same code, just published to different artifact repositories.
 
 ## Getting Started
 
