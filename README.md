@@ -21,12 +21,10 @@ Add dependency in your `build.gradle` file as `implementation 'com.grab.grabidpa
 For versions 2.0.9+, GrabID Partner SDK is available in MavenCentral repository.
 For versions 1.1 - 2.0.6, GrabID Partner SDK is available in JCenter repository.
 
-Note: versions 2.0.6 and 2.0.9 are the same code, just published to different artifact repositories.
-
 ## Getting Started
 
 ### SDK Configuration
-Firstly, you need to register an application to Grab and get credentials for your app from GrabID team.
+First, you need to register an application to Grab and get credentials for your app from GrabID team.
 
 Then, update the AndroidManifest.xml file your project with required information.
 Add the following snippet, replacing the placeholders within the square brackets (`[]`):
