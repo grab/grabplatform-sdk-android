@@ -14,13 +14,12 @@ apply plugin: 'org.jetbrains.dokka-android'
 apply from: '../dependencies.gradle'
 
 android {
-    compileSdkVersion appCompileSdkVersion
-    buildToolsVersion buildToolsVersion
-
+    compileSdkVersion androidCompileSdkVersion
+    buildToolsVersion androidBuildToolsVersion
 
     defaultConfig {
-        minSdkVersion minSdkSupportedVersion
-        targetSdkVersion maxSdkSupportedVersion
+        minSdkVersion androidMinSdkVersion
+        targetSdkVersion androidTargetSdkVersion
         versionCode appVersion
         versionName appVersionName
 
@@ -29,8 +28,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility javaVersion
+        targetCompatibility javaVersion
     }
 
     buildTypes {

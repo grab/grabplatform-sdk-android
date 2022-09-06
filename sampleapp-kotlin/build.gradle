@@ -13,8 +13,8 @@ apply plugin: 'kotlin-android-extensions'
 apply from: '../dependencies.gradle'
 
 android {
-    compileSdkVersion appCompileSdkVersion
-    buildToolsVersion buildToolsVersion
+    compileSdkVersion androidCompileSdkVersion
+    buildToolsVersion androidBuildToolsVersion
 
     dataBinding {
         enabled = true
@@ -22,8 +22,8 @@ android {
 
     defaultConfig {
         applicationId "com.grab.partner.sdk.sampleappkotlin"
-        minSdkVersion minSdkSupportedVersion
-        targetSdkVersion maxSdkSupportedVersion
+        minSdkVersion androidMinSdkVersion
+        targetSdkVersion androidTargetSdkVersion
         versionCode 1
         versionName "1.0"
 
@@ -32,8 +32,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility javaVersion
+        targetCompatibility javaVersion
     }
 
     buildTypes {
