@@ -20,7 +20,8 @@
             android:theme="@style/GrabIdPartnerSDKTheme">
 
         <activity
-                android:name=".view.MainActivity"
+            android:name=".view.MainActivity"
+            android:exported="true"
                 android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
