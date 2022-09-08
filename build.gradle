@@ -10,7 +10,7 @@ buildscript {
     apply from: 'dependencies.gradle'
     ext{
         android_plugin_version = '2.3.0'
-        dokka_version = '0.9.17'
+        dokka_version = '1.7.10'
         publish_plugin_version = '1.1.0'
     }
     repositories {
@@ -25,7 +25,7 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "io.github.gradle-nexus:publish-plugin:$publish_plugin_version"
         classpath "com.github.dcendents:android-maven-gradle-plugin:$android_maven_gradle_plugin_version"
-        classpath "org.jetbrains.dokka:dokka-android-gradle-plugin:${dokka_version}"
+        classpath("org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}")
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
