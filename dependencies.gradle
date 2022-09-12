@@ -1,12 +1,12 @@
 ext {
-    kotlin_version = '1.4.21'
+    kotlin_version = '1.4.31'
     gradle_version = '4.0.1'
     gradle_bintray_plugin_version = '1.7.3'
     android_maven_gradle_plugin_version = '2.1'
     rxkotlin_version = '2.4.0'
     minSdkSupportedVersion = 19
-    maxSdkSupportedVersion = 30
-    appCompileSdkVersion = 30
+    maxSdkSupportedVersion = 31
+    appCompileSdkVersion = 31
     buildToolsVersion = "28.0.3"
     appApplicationId = "com.blockchain"
     appVersion = 1
@@ -30,7 +30,7 @@ ext {
     rxandroid = '2.1.1'
     mockito_inline_version = '2.8.9'
     test_runner_version = '1.0.2'
-    leakcanary_version = '2.3'
+    leakcanary_version = '2.7'
     chrome_custom_tab_version = '1.2.0'
     powermock_version = '1.6.4'
     powermock_api_version = '2.0.0-beta.5'

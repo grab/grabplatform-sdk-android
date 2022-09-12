@@ -12,6 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/GrabIdPartnerSDKTheme">
         <activity
+            android:exported="true"
             android:name="com.grab.partner.sdk.wrapper.deeplink.DeepLinkActivity"
             android:launchMode="singleTask">
             <intent-filter>
@@ -27,7 +28,8 @@
         </activity>
 
         <activity
-            android:name="com.grab.partner.sdk.sampleappkotlin.wrapper.views.MainActivity">
+            android:name="com.grab.partner.sdk.sampleappkotlin.wrapper.views.MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
