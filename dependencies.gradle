@@ -4,7 +4,7 @@ ext {
     gradle_bintray_plugin_version = '1.7.3'
     android_maven_gradle_plugin_version = '2.1'
     rxkotlin_version = '2.4.0'
-    androidMinSdkVersion = 19
+    androidMinSdkVersion = 21
     androidCompileSdkVersion = 32
     androidBuildToolsVersion = "32.0.0"
     androidTargetSdkVersion = 32
