@@ -1,5 +1,5 @@
 ext {
-    kotlin_version = '1.6.10'
+    kotlin_version = '1.6.21'
     gradle_version = '7.1.2'
     gradle_bintray_plugin_version = '1.7.3'
     android_maven_gradle_plugin_version = '2.1'
