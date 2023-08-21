@@ -4,10 +4,10 @@ ext {
     gradle_bintray_plugin_version = '1.7.3'
     android_maven_gradle_plugin_version = '2.1'
     rxkotlin_version = '2.4.0'
-    androidMinSdkVersion = 19
-    androidCompileSdkVersion = 32
-    androidBuildToolsVersion = "32.0.0"
-    androidTargetSdkVersion = 32
+    androidMinSdkVersion = 21
+    androidCompileSdkVersion = 33
+    androidBuildToolsVersion = "33.0.1"
+    androidTargetSdkVersion = 33
     javaVersion = JavaVersion.VERSION_11
 
     appApplicationId = "com.blockchain"
@@ -23,7 +23,7 @@ ext {
     mockito_kotlin_version = '2.1.0'
     retrofit_version = '2.9.0'
     okhttplogging_version = '3.11.0'
-    dagger_version = '2.37'
+    dagger_version = '2.18'
     room_version = '1.1.0'
     room_rx_version = '2.1.0'
     gson_version = '2.8.9'
