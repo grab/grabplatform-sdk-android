@@ -10,9 +10,9 @@ and terms of service.
 To run the example project, clone the repo, and run the app in the emulator and walk through the login flow in sequence.
 
 ## Requirements
-- API level: minimum API level supported by SDK is 19
-- Android Build Tool 32.0.0
-- android 31 support
+- API level: minimum API level supported by SDK is 21
+- Android Build Tool 33.0.1
+- android 33 support
 
 
 ## Installation GrabID Partner SDK
