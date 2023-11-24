@@ -27,6 +27,10 @@ android {
 
     }
 
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+
     compileOptions {
         sourceCompatibility javaVersion
         targetCompatibility javaVersion
@@ -51,7 +55,7 @@ ext {
     gitUrl = 'https://github.com/grab/grabidpartnersdk-android.git'
     githubRepository= 'grab/grabplatform-sdk-android'
 
-    libraryVersion = '2.1' // Current version of .aar in JCenter
+    libraryVersion = '2.2.2' // Current version of .aar in JCenter
 
     licenseName = 'The MIT License'
     licenseUrl = 'https://opensource.org/licenses/MIT'
