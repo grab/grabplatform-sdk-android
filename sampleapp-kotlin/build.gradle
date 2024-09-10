@@ -9,10 +9,11 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
-apply plugin: 'kotlin-android-extensions'
 apply from: '../dependencies.gradle'
 
 android {
+    namespace 'com.grab.partner.sdk.sampleapp'
+
     compileSdkVersion androidCompileSdkVersion
     buildToolsVersion androidBuildToolsVersion
 
@@ -34,6 +35,10 @@ android {
     compileOptions {
         sourceCompatibility javaVersion
         targetCompatibility javaVersion
+    }
+
+    kotlinOptions {
+        jvmTarget = javaVersion
     }
 
     buildTypes {

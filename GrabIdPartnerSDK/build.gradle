@@ -9,11 +9,13 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
-apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-parcelize'
 apply plugin: 'org.jetbrains.dokka'
 apply from: '../dependencies.gradle'
 
 android {
+    namespace 'com.grab.partner.sdk'
+
     compileSdkVersion androidCompileSdkVersion
     buildToolsVersion androidBuildToolsVersion
 
@@ -27,13 +29,13 @@ android {
 
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-
     compileOptions {
         sourceCompatibility javaVersion
         targetCompatibility javaVersion
+    }
+
+    kotlinOptions {
+        jvmTarget = javaVersion
     }
 
     buildTypes {
@@ -55,7 +57,7 @@ ext {
     gitUrl = 'https://github.com/grab/grabidpartnersdk-android.git'
     githubRepository= 'grab/grabplatform-sdk-android'
 
-    libraryVersion = '2.2.2' // Current version of .aar in JCenter
+    libraryVersion = '2.3.1' // Current version of .aar in JCenter
 
     licenseName = 'The MIT License'
     licenseUrl = 'https://opensource.org/licenses/MIT'
