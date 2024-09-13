@@ -6,7 +6,8 @@
   ~
   -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.grab.partner.sdk">
 
     <queries>
         <package android:name="com.grabtaxi.passenger" />
