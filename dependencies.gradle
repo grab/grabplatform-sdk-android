@@ -1,12 +1,12 @@
 ext {
-    kotlin_version = '1.8.10'
-    gradle_version = '8.2.1'
+    kotlin_version = '1.7.21'
+    gradle_version = '8.1.4'
     gradle_bintray_plugin_version = '1.7.3'
     android_maven_gradle_plugin_version = '2.1'
     rxkotlin_version = '2.4.0'
     androidMinSdkVersion = 21
     androidCompileSdkVersion = 34
-    androidBuildToolsVersion = "34.0.0"
+    androidBuildToolsVersion = "33.0.1"
     androidTargetSdkVersion = 34
     javaVersion = JavaVersion.VERSION_17
 
@@ -23,7 +23,7 @@ ext {
     mockito_kotlin_version = '2.1.0'
     retrofit_version = '2.9.0'
     okhttplogging_version = '3.11.0'
-    dagger_version = '2.46'
+    dagger_version = '2.42'
     room_version = '1.1.0'
     room_rx_version = '2.1.0'
     gson_version = '2.8.9'
