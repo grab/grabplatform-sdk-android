@@ -8,7 +8,7 @@ ext {
     androidCompileSdkVersion = 34
     androidBuildToolsVersion = "33.0.1"
     androidTargetSdkVersion = 34
-    javaVersion = JavaVersion.VERSION_17
+    javaVersion = JavaVersion.VERSION_11
 
     appApplicationId = "com.blockchain"
     appVersion = 1
