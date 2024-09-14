@@ -39,7 +39,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = javaVersion
+        jvmTarget = "11"
     }
 
     buildTypes {
