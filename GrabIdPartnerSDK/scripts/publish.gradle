@@ -61,7 +61,7 @@ afterEvaluate {
                 }
 
                 // artifact sourcesJar
-                // artifact javadocJar
+                artifact javadocJar
 
                 pom {
                     name = libraryName
@@ -110,7 +110,6 @@ afterEvaluate {
             }
         }
     }
-    generateMetadataFileForReleasePublication.dependsOn javadocJar
     generateMetadataFileForReleasePublication.dependsOn sourcesJar
 }
 
