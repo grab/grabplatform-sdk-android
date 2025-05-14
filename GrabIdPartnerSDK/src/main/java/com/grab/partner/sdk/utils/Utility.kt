@@ -353,22 +353,22 @@ internal class Utility : IUtility {
     }
 
     override fun isPackageInstalled(protocols: List<String>?, packageManager: PackageManager): Maybe<ProtocolInfo> {
-        var gson = Gson()
+        val gson = Gson()
 
         if (protocols != null) {
             for (customProtocol in protocols) {
                 // check if the package is installed
                 try {
-                    var protocolInfo = gson.fromJson(customProtocol, ProtocolInfo::class.java)
+                    val protocolInfo = gson.fromJson(customProtocol, ProtocolInfo::class.java)
                     // if any of the required parameters are missing then no need to proceed
                     if (protocolInfo.minversion_adr.isNullOrEmpty() || protocolInfo.package_adr.isNullOrEmpty() || protocolInfo.protocol_adr.isNullOrEmpty()) {
                         continue
                     }
 
-                    var packageInfo = packageManager.getPackageInfo(protocolInfo.package_adr, 0)
+                    val packageInfo = packageManager.getPackageInfo(protocolInfo.package_adr, 0)
                     if (packageInfo != null) {
-                        var installedAppVersion = Version(packageInfo.versionName)
-                        var requiredAppVersion = Version(protocolInfo.minversion_adr)
+                        val installedAppVersion = Version(packageInfo.versionName.orEmpty())
+                        val requiredAppVersion = Version(protocolInfo.minversion_adr)
 
                         if (installedAppVersion >= requiredAppVersion) {
                             return Maybe.just(protocolInfo)
