@@ -57,7 +57,7 @@ ext {
     gitUrl = 'https://github.com/grab/grabidpartnersdk-android.git'
     githubRepository= 'grab/grabplatform-sdk-android'
 
-    libraryVersion = '2.4.0' // Current version of .aar in JCenter
+    libraryVersion = '2.4.1' // Current version of .aar in JCenter
 
     licenseName = 'The MIT License'
     licenseUrl = 'https://opensource.org/licenses/MIT'
