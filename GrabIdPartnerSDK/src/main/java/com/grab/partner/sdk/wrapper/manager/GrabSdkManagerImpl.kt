@@ -65,7 +65,7 @@ class GrabSdkManagerImpl private constructor() : GrabSdkManager {
     }
 
     override fun doLogin(context: Context, clientId: String) {
-        if (isInitialized()) {
+        if (isInitialized() && ::clientStates.isInitialized) {
             val state = clientStates[clientId]
             val builder = sessions[state]
 
@@ -78,7 +78,7 @@ class GrabSdkManagerImpl private constructor() : GrabSdkManager {
     }
 
     internal fun returnResult(result: String) {
-        if (isInitialized()) {
+        if (isInitialized() && ::utility.isInitialized) {
             val code = utility.getURLParam(RESPONSE_TYPE, result)
             val state = utility.getURLParam(RESPONSE_STATE, result)
             val builder = sessions[state]
