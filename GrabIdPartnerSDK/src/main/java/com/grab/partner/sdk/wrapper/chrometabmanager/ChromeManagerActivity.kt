@@ -52,27 +52,26 @@ class ChromeManagerActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setupDI()
         super.onCreate(savedInstanceState)
-        val repo = GrabIdPartner.mainComponent.getGrabIdPartnerRepo()
-        val uri = repo.getUri()
-        callback = repo.getLoginCallback()
-        HAVE_LAUNCHED_CHROME_TAB_MANAGER_ACTIVITY = false
-        uri?.let {
-            try {
+        try {
+            val repo = GrabIdPartner.mainComponent.getGrabIdPartnerRepo()
+            val uri = repo.getUri()
+            callback = repo.getLoginCallback()
+            HAVE_LAUNCHED_CHROME_TAB_MANAGER_ACTIVITY = false
+            uri?.let {
                 // launch chrome custom tab
-                GrabIdPartner.mainComponent.getChromeTabLauncher()
-                    .launchChromeTab(this, it, callback)
-            } catch (ex: Exception) {
-                //can't do anything here, so sending the onError callback
-                callback?.onError(
-                    GrabIdPartnerError(
-                        GrabIdPartnerErrorDomain.LAUNCHOAUTHFLOW,
-                        GrabIdPartnerErrorCode.errorLaunchingChromeCustomTab,
-                        ex.localizedMessage,
-                        null
-                    )
-                )
-                finish()
+                GrabIdPartner.mainComponent.getChromeTabLauncher().launchChromeTab(this, it, callback)
             }
+        } catch (ex: Exception) {
+            //can't do anything here, so sending the onError callback
+            callback?.onError(
+                GrabIdPartnerError(
+                    GrabIdPartnerErrorDomain.LAUNCHOAUTHFLOW,
+                    GrabIdPartnerErrorCode.errorLaunchingChromeCustomTab,
+                    ex.localizedMessage,
+                    null
+                )
+            )
+            finish()
         }
     }
 
