@@ -82,7 +82,7 @@ class ChromeManagerActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (HAVE_LAUNCHED_CHROME_TAB_MANAGER_ACTIVITY) {
+        if (HAVE_LAUNCHED_CHROME_TAB_MANAGER_ACTIVITY && ::utility.isInitialized) {
             // if we're here meaning user actually didn't complete the OAuth flow
             callback?.onError(
                 GrabIdPartnerError(
@@ -106,6 +106,8 @@ class ChromeManagerActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         // this is to avoid memory leak
-        GrabIdPartner.mainComponent.getChromeTabLauncher().unbindChromeServiceConnection(this)
+        try {
+            GrabIdPartner.mainComponent.getChromeTabLauncher().unbindChromeServiceConnection(this)
+        } catch (_: Exception) { }
     }
 }
