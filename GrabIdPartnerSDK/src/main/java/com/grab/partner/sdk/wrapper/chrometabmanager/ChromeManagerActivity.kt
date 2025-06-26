@@ -82,13 +82,16 @@ class ChromeManagerActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (HAVE_LAUNCHED_CHROME_TAB_MANAGER_ACTIVITY && ::utility.isInitialized) {
+        if (HAVE_LAUNCHED_CHROME_TAB_MANAGER_ACTIVITY) {
             // if we're here meaning user actually didn't complete the OAuth flow
             callback?.onError(
                 GrabIdPartnerError(
                     GrabIdPartnerErrorDomain.LOGIN,
                     GrabIdPartnerErrorCode.loginCancelledByUser,
-                    utility.readResourceString(this, R.string.ERROR_USER_CANCELLED_LOGIN_FLOW),
+                    if (::utility.isInitialized) utility.readResourceString(
+                        this,
+                        R.string.ERROR_USER_CANCELLED_LOGIN_FLOW
+                    ) else "",
                     null
                 )
             )
