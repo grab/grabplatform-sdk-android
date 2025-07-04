@@ -1,7 +1,7 @@
 package com.grab.partner.sdk.utils
 
 import android.content.Intent
-import com.nhaarman.mockitokotlin2.mock
+import org.mockito.kotlin.mock
 
 /**
  * Test intent provider for verifying intent param or calling.

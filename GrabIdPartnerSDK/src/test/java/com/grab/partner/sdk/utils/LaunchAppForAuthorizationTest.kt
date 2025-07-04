@@ -9,22 +9,18 @@ import com.grab.partner.sdk.models.GrabIdPartnerErrorDomain
 import com.grab.partner.sdk.models.LoginSession
 import com.grab.partner.sdk.repo.GrabIdPartnerRepo
 import com.grab.partner.sdk.wrapper.chrometabmanager.ChromeManagerActivityLauncher
-import com.nhaarman.mockitokotlin2.any
-import com.nhaarman.mockitokotlin2.argThat
-import com.nhaarman.mockitokotlin2.eq
-import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.verify
-import com.nhaarman.mockitokotlin2.whenever
+import org.mockito.kotlin.any
+import org.mockito.kotlin.argThat
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.ArgumentMatchers.anyString
-import org.powermock.api.mockito.PowerMockito
-import org.powermock.core.classloader.annotations.PrepareForTest
-import org.powermock.modules.junit4.PowerMockRunner
+import org.mockito.MockedStatic
+import org.mockito.Mockito
 
-@RunWith(PowerMockRunner::class)
-@PrepareForTest(Uri::class, Uri.Builder::class)
 class LaunchAppForAuthorizationImplTest  {
 
     private var context: Context = mock()
@@ -56,8 +52,6 @@ class LaunchAppForAuthorizationImplTest  {
 
     @Before
     fun initialize() {
-        PowerMockito.mockStatic(Uri::class.java)
-        PowerMockito.mockStatic(Uri.Builder::class.java)
         testProvider = TestIntentProvider()
         launcher.apply { this.intentProvider = testProvider; }
     }
@@ -66,48 +60,57 @@ class LaunchAppForAuthorizationImplTest  {
     fun LaunchOAuthFlow_hasPlayLink_shouldLaunchNative() {
         loginSession.deeplinkUriInternal = uri
         loginSession.playstoreLinkInternal = uri_playstore
-        val mockURI: Uri = PowerMockito.mock(Uri::class.java)
-        val afterBuilderURI: Uri = PowerMockito.mock(Uri::class.java)
-        val mockBuilder = PowerMockito.mock(Uri.Builder::class.java)
-        PowerMockito.`when`(Uri.parse(eq(uri))).thenReturn(mockURI)
-        PowerMockito.`when`(mockURI.buildUpon()).thenReturn(mockBuilder)
-        PowerMockito.`when`(mockBuilder.appendQueryParameter(anyString(), anyString())).thenReturn(mockBuilder)
-        PowerMockito.`when`(mockBuilder.build()).thenReturn(afterBuilderURI)
-        whenever(context.packageManager).thenReturn(mock())
-        whenever(testProvider.mockIntent.resolveActivity(any())).thenReturn(mock())
-        launcher.launchOAuthFlow(context, loginSession, callback, true)
-        verify(testProvider.mockImpl).provideIntent(eq(Intent.ACTION_VIEW))
-        verify(testProvider.mockIntent).setData(any())
-        verify(testProvider.mockIntent).setFlags(any())
-        verify(context).startActivity(eq(testProvider.mockIntent))
-        verify(callback).onSuccess()
+        val mockStaticUri: MockedStatic<Uri> = Mockito.mockStatic(Uri::class.java)
+        try {
+            val mockUri: Uri = mock()
+            val mockAfterBuildUri: Uri = mock()
+            val mockBuilder: Uri.Builder = mock()
+            mockStaticUri.`when`<Uri> { Uri.parse(eq(uri)) }.thenReturn(mockUri)
+            whenever(mockUri.buildUpon()).thenReturn(mockBuilder)
+            whenever(mockBuilder.appendQueryParameter(anyString(), anyString())).thenReturn(mockBuilder)
+            whenever(mockBuilder.build()).thenReturn(mockAfterBuildUri)
+            whenever(context.packageManager).thenReturn(mock())
+            whenever(testProvider.mockIntent.resolveActivity(any())).thenReturn(mock())
+            launcher.launchOAuthFlow(context, loginSession, callback, true)
+            verify(testProvider.mockImpl).provideIntent(eq(Intent.ACTION_VIEW))
+            verify(testProvider.mockIntent).setData(any())
+            verify(testProvider.mockIntent).setFlags(any())
+            verify(context).startActivity(eq(testProvider.mockIntent))
+            verify(callback).onSuccess()
+        } finally {
+            mockStaticUri.close()
+        }
     }
 
     @Test
     fun LaunchOAuthFlow_hasPlayLink() {
         loginSession.playstoreLinkInternal = uri_playstore
         loginSession.authorizationEndpoint = uri_authEndpoint
-        val mockURI: Uri = PowerMockito.mock(Uri::class.java)
-        val afterBuilderURI: Uri = PowerMockito.mock(Uri::class.java)
-        val mockBuilder = PowerMockito.mock(Uri.Builder::class.java)
-        val mockURIForPlayStore: Uri = PowerMockito.mock(Uri::class.java)
-        PowerMockito.`when`(Uri.parse(eq(uri_playstore))).thenReturn(mockURIForPlayStore)
-        PowerMockito.`when`(Uri.parse(eq(uri_authEndpoint))).thenReturn(mockURI)
-        PowerMockito.`when`(mockURI.buildUpon()).thenReturn(mockBuilder)
-        PowerMockito.`when`(mockBuilder.appendQueryParameter(anyString(), anyString())).thenReturn(mockBuilder)
-        PowerMockito.`when`(mockBuilder.build()).thenReturn(afterBuilderURI)
-        whenever(context.packageManager).thenReturn(mock())
-        whenever(testProvider.mockIntent.resolveActivity(any())).thenReturn(mock())
-        launcher.launchOAuthFlow(context, loginSession, callback, false)
-        verify(testProvider.mockImpl).provideIntent(eq(Intent.ACTION_VIEW))
-        verify(testProvider.mockIntent).setData(any())
-        verify(testProvider.mockIntent).setFlags(any())
-        verify(context).startActivity(eq(testProvider.mockIntent))
-        verify(callback).onError(argThat{
-            this.grabIdPartnerErrorDomain == GrabIdPartnerErrorDomain.LAUNCHOAUTHFLOW
-                    && this.code == GrabIdPartnerErrorCode.launchAppStoreLink
-                    && this.localizeMessage == uri_playstore
-        })
+        val mockStaticUri: MockedStatic<Uri> = Mockito.mockStatic(Uri::class.java)
+        try {
+            val mockUri: Uri = mock()
+            val mockAfterBuildUri: Uri = mock()
+            val mockBuilder: Uri.Builder = mock()
+            mockStaticUri.`when`<Uri> { Uri.parse(eq(uri_playstore)) }.thenReturn(mockUri)
+            mockStaticUri.`when`<Uri> { Uri.parse(eq(uri_authEndpoint)) }.thenReturn(mockUri)
+            whenever(mockUri.buildUpon()).thenReturn(mockBuilder)
+            whenever(mockBuilder.appendQueryParameter(anyString(), anyString())).thenReturn(mockBuilder)
+            whenever(mockBuilder.build()).thenReturn(mockAfterBuildUri)
+            whenever(context.packageManager).thenReturn(mock())
+            whenever(testProvider.mockIntent.resolveActivity(any())).thenReturn(mock())
+            launcher.launchOAuthFlow(context, loginSession, callback, false)
+            verify(testProvider.mockImpl).provideIntent(eq(Intent.ACTION_VIEW))
+            verify(testProvider.mockIntent).setData(any())
+            verify(testProvider.mockIntent).setFlags(any())
+            verify(context).startActivity(eq(testProvider.mockIntent))
+            verify(callback).onError(argThat {
+                this.grabIdPartnerErrorDomain == GrabIdPartnerErrorDomain.LAUNCHOAUTHFLOW
+                        && this.code == GrabIdPartnerErrorCode.launchAppStoreLink
+                        && this.localizeMessage == uri_playstore
+            })
+        } finally {
+            mockStaticUri.close()
+        }
     }
 
     @Test
@@ -115,50 +118,58 @@ class LaunchAppForAuthorizationImplTest  {
         context = mock()
         loginSession.playstoreLinkInternal = uri_playstore
         loginSession.authorizationEndpoint = uri_authEndpoint
-        val mockURI: Uri = PowerMockito.mock(Uri::class.java)
-        val afterBuilderURI: Uri = PowerMockito.mock(Uri::class.java)
-        val mockBuilder = PowerMockito.mock(Uri.Builder::class.java)
-        val mockURIForPlayStore: Uri = PowerMockito.mock(Uri::class.java)
-        PowerMockito.`when`(Uri.parse(eq(uri_playstore))).thenReturn(mockURIForPlayStore)
-        PowerMockito.`when`(Uri.parse(eq(uri_authEndpoint))).thenReturn(mockURI)
-        PowerMockito.`when`(mockURI.buildUpon()).thenReturn(mockBuilder)
-        PowerMockito.`when`(mockBuilder.appendQueryParameter(anyString(), anyString())).thenReturn(mockBuilder)
-        PowerMockito.`when`(mockBuilder.build()).thenReturn(afterBuilderURI)
-        whenever(context.packageManager).thenReturn(mock())
-        whenever(testProvider.mockIntent.resolveActivity(any())).thenReturn(mock())
-        whenever(context.startActivity(any())).thenThrow(NullPointerException())
-        launcher.launchOAuthFlow(context, loginSession, callback, false)
-        verify(testProvider.mockImpl).provideIntent(eq(Intent.ACTION_VIEW))
-        verify(testProvider.mockIntent).setData(any())
-        verify(testProvider.mockIntent).setFlags(any())
-        verify(context).startActivity(eq(testProvider.mockIntent))
-        verify(callback).onError(argThat{
-            this.grabIdPartnerErrorDomain == GrabIdPartnerErrorDomain.LAUNCHOAUTHFLOW
-                    && this.code == GrabIdPartnerErrorCode.failedTolaunchAppStoreLink
-                    && this.localizeMessage == uri_playstore
-        })
-
+        val mockStaticUri: MockedStatic<Uri> = Mockito.mockStatic(Uri::class.java)
+        try {
+            val mockUri: Uri = mock()
+            val mockAfterBuildUri: Uri = mock()
+            val mockBuilder: Uri.Builder = mock()
+            mockStaticUri.`when`<Uri> { Uri.parse(eq(uri_playstore)) }.thenReturn(mockUri)
+            mockStaticUri.`when`<Uri> { Uri.parse(eq(uri_authEndpoint)) }.thenReturn(mockUri)
+            whenever(mockUri.buildUpon()).thenReturn(mockBuilder)
+            whenever(mockBuilder.appendQueryParameter(anyString(), anyString())).thenReturn(mockBuilder)
+            whenever(mockBuilder.build()).thenReturn(mockAfterBuildUri)
+            whenever(context.packageManager).thenReturn(mock())
+            whenever(testProvider.mockIntent.resolveActivity(any())).thenReturn(mock())
+            whenever(context.startActivity(any())).thenThrow(NullPointerException())
+            launcher.launchOAuthFlow(context, loginSession, callback, false)
+            verify(testProvider.mockImpl).provideIntent(eq(Intent.ACTION_VIEW))
+            verify(testProvider.mockIntent).setData(any())
+            verify(testProvider.mockIntent).setFlags(any())
+            verify(context).startActivity(eq(testProvider.mockIntent))
+            verify(callback).onError(argThat {
+                this.grabIdPartnerErrorDomain == GrabIdPartnerErrorDomain.LAUNCHOAUTHFLOW
+                        && this.code == GrabIdPartnerErrorCode.failedTolaunchAppStoreLink
+                        && this.localizeMessage == uri_playstore
+            })
+        } finally {
+            mockStaticUri.close()
+        }
     }
 
     @Test
     fun LaunchOAuthFlow_webFlow_shouldLaunchNative() {
         loginSession.deeplinkUriInternal = uri
         loginSession.playstoreLinkInternal = ""
-        val mockURI: Uri = PowerMockito.mock(Uri::class.java)
-        val afterBuilderURI: Uri = PowerMockito.mock(Uri::class.java)
-        val mockBuilder = PowerMockito.mock(Uri.Builder::class.java)
-        PowerMockito.`when`(Uri.parse(eq(uri))).thenReturn(mockURI)
-        PowerMockito.`when`(mockURI.buildUpon()).thenReturn(mockBuilder)
-        PowerMockito.`when`(mockBuilder.appendQueryParameter(anyString(), anyString())).thenReturn(mockBuilder)
-        PowerMockito.`when`(mockBuilder.build()).thenReturn(afterBuilderURI)
-        whenever(context.packageManager).thenReturn(mock())
-        whenever(testProvider.mockIntent.resolveActivity(any())).thenReturn(mock())
-        launcher.launchOAuthFlow(context, loginSession, callback, true)
-        verify(testProvider.mockImpl).provideIntent(eq(Intent.ACTION_VIEW))
-        verify(testProvider.mockIntent).setData(any())
-        verify(testProvider.mockIntent).setFlags(any())
-        verify(context).startActivity(eq(testProvider.mockIntent))
-        verify(callback).onSuccess()
+        val mockStaticUri: MockedStatic<Uri> = Mockito.mockStatic(Uri::class.java)
+        try {
+            val mockUri: Uri = mock()
+            val mockAfterBuildUri: Uri = mock()
+            val mockBuilder: Uri.Builder = mock()
+            mockStaticUri.`when`<Uri> { Uri.parse(eq(uri)) }.thenReturn(mockUri)
+            whenever(mockUri.buildUpon()).thenReturn(mockBuilder)
+            whenever(mockBuilder.appendQueryParameter(anyString(), anyString())).thenReturn(mockBuilder)
+            whenever(mockBuilder.build()).thenReturn(mockAfterBuildUri)
+            whenever(context.packageManager).thenReturn(mock())
+            whenever(testProvider.mockIntent.resolveActivity(any())).thenReturn(mock())
+            launcher.launchOAuthFlow(context, loginSession, callback, true)
+            verify(testProvider.mockImpl).provideIntent(eq(Intent.ACTION_VIEW))
+            verify(testProvider.mockIntent).setData(any())
+            verify(testProvider.mockIntent).setFlags(any())
+            verify(context).startActivity(eq(testProvider.mockIntent))
+            verify(callback).onSuccess()
+        } finally {
+            mockStaticUri.close()
+        }
     }
 
     @Test
@@ -166,17 +177,22 @@ class LaunchAppForAuthorizationImplTest  {
         loginSession.deeplinkUriInternal = uri
         loginSession.authorizationEndpoint = uri_authEndpoint
         loginSession.playstoreLinkInternal = ""
-        val mockURI: Uri = PowerMockito.mock(Uri::class.java)
-        val afterBuilderURI: Uri = PowerMockito.mock(Uri::class.java)
-        val mockBuilder = PowerMockito.mock(Uri.Builder::class.java)
-        PowerMockito.`when`(Uri.parse(eq(uri_authEndpoint))).thenReturn(mockURI)
-        PowerMockito.`when`(mockURI.buildUpon()).thenReturn(mockBuilder)
-        PowerMockito.`when`(mockBuilder.appendQueryParameter(anyString(), anyString())).thenReturn(mockBuilder)
-        PowerMockito.`when`(mockBuilder.build()).thenReturn(afterBuilderURI)
-        whenever(context.packageManager).thenReturn(mock())
-        whenever(testProvider.mockIntent.resolveActivity(any())).thenReturn(mock())
-        launcher.launchOAuthFlow(context, loginSession, callback, false)
-        verify(chromeTabLauncher).launchChromeTab(context, afterBuilderURI, callback)
+        val mockStaticUri: MockedStatic<Uri> = Mockito.mockStatic(Uri::class.java)
+        try {
+            val mockUri: Uri = mock()
+            val mockAfterBuildUri: Uri = mock()
+            val mockBuilder: Uri.Builder = mock()
+            mockStaticUri.`when`<Uri> { Uri.parse(eq(uri_authEndpoint)) }.thenReturn(mockUri)
+            whenever(mockUri.buildUpon()).thenReturn(mockBuilder)
+            whenever(mockBuilder.appendQueryParameter(anyString(), anyString())).thenReturn(mockBuilder)
+            whenever(mockBuilder.build()).thenReturn(mockAfterBuildUri)
+            whenever(context.packageManager).thenReturn(mock())
+            whenever(testProvider.mockIntent.resolveActivity(any())).thenReturn(mock())
+            launcher.launchOAuthFlow(context, loginSession, callback, false)
+            verify(chromeTabLauncher).launchChromeTab(context, mockAfterBuildUri, callback)
+        } finally {
+            mockStaticUri.close()
+        }
     }
 
     @Test
@@ -185,18 +201,23 @@ class LaunchAppForAuthorizationImplTest  {
         loginSession.authorizationEndpoint = uri_authEndpoint
         loginSession.playstoreLinkInternal = ""
         loginSession.isWrapperFlow = true
-        val mockURI: Uri = PowerMockito.mock(Uri::class.java)
-        val afterBuilderURI: Uri = PowerMockito.mock(Uri::class.java)
-        val mockBuilder = PowerMockito.mock(Uri.Builder::class.java)
-        PowerMockito.`when`(Uri.parse(eq(uri_authEndpoint))).thenReturn(mockURI)
-        PowerMockito.`when`(mockURI.buildUpon()).thenReturn(mockBuilder)
-        PowerMockito.`when`(mockBuilder.appendQueryParameter(anyString(), anyString())).thenReturn(mockBuilder)
-        PowerMockito.`when`(mockBuilder.build()).thenReturn(afterBuilderURI)
-        whenever(context.packageManager).thenReturn(mock())
-        whenever(testProvider.mockIntent.resolveActivity(any())).thenReturn(mock())
-        launcher.launchOAuthFlow(context, loginSession, callback, false)
-        verify(grabIdPartnerRepo).saveLoginCallback(callback)
-        verify(grabIdPartnerRepo).saveUri(afterBuilderURI)
-        verify(chromeManagerActivityLauncher).launchChromeManagerActivity(context)
+        val mockStaticUri: MockedStatic<Uri> = Mockito.mockStatic(Uri::class.java)
+        try {
+            val mockUri: Uri = mock()
+            val mockAfterBuildUri: Uri = mock()
+            val mockBuilder: Uri.Builder = mock()
+            mockStaticUri.`when`<Uri> { Uri.parse(eq(uri_authEndpoint)) }.thenReturn(mockUri)
+            whenever(mockUri.buildUpon()).thenReturn(mockBuilder)
+            whenever(mockBuilder.appendQueryParameter(anyString(), anyString())).thenReturn(mockBuilder)
+            whenever(mockBuilder.build()).thenReturn(mockAfterBuildUri)
+            whenever(context.packageManager).thenReturn(mock())
+            whenever(testProvider.mockIntent.resolveActivity(any())).thenReturn(mock())
+            launcher.launchOAuthFlow(context, loginSession, callback, false)
+            verify(grabIdPartnerRepo).saveLoginCallback(callback)
+            verify(grabIdPartnerRepo).saveUri(mockAfterBuildUri)
+            verify(chromeManagerActivityLauncher).launchChromeManagerActivity(context)
+        } finally {
+            mockStaticUri.close()
+        }
     }
 }

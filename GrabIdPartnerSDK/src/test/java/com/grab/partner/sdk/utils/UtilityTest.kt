@@ -12,8 +12,8 @@ import android.content.pm.PackageManager
 import com.google.gson.Gson
 import com.grab.partner.sdk.models.PlaystoreProtocol
 import com.grab.partner.sdk.models.ProtocolInfo
-import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.whenever
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 import org.junit.Test
 
 class UtilityTest {

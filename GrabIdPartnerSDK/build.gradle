@@ -93,8 +93,6 @@ dependencies {
 
     // unit tests
     testImplementation junit
-    testImplementation powermock
-    testImplementation powermockapi
     testImplementation mockitokotlin
 }
 

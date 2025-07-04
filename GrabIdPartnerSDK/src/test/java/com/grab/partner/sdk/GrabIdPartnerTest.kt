@@ -12,31 +12,21 @@ import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.util.Base64
-import android.util.Log
 import com.grab.partner.sdk.models.*
 import com.grab.partner.sdk.scheduleprovider.TestSchedulerProvider
 import com.grab.partner.sdk.utils.LaunchAppForAuthorization
-import com.grab.partner.sdk.utils.Utility
-import com.nhaarman.mockitokotlin2.*
+import org.mockito.kotlin.*
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.internal.verification.Times
-import org.powermock.api.mockito.PowerMockito
-import org.powermock.core.classloader.annotations.PrepareForTest
-import org.powermock.modules.junit4.PowerMockRunner
 import java.security.KeyPair
-import java.security.KeyStore
 import java.util.UUID
 
-@RunWith(PowerMockRunner::class)
-@PrepareForTest(Base64::class, LoginSession::class, Utility::class, KeyStore::class, Log::class, CompositeDisposable::class)
 class GrabIdPartnerTest {
     private val grabIdPartner = GrabIdPartner.instance as GrabIdPartner
     private val loginSessionCallback = TestLoginSessionCallback()
@@ -52,7 +42,7 @@ class GrabIdPartnerTest {
     private val grabAuthRepository = StubGrabAuthRepository()
     private val scheduleProvider = TestSchedulerProvider()
     private val launchAppForAuthorization = mock<LaunchAppForAuthorization>()
-    private val keyPair = PowerMockito.mock(KeyPair::class.java)
+    private val keyPair = mock<KeyPair>()
     private val androidKeyStoreWrapper = StubAndroidKeyStoreWrapper(keyPair)
     private val cipherWrapper = StubCipherWrapper()
     private val compositeDisposable: CompositeDisposable = mock(CompositeDisposable::class.java)
@@ -77,7 +67,6 @@ class GrabIdPartnerTest {
 
     @Before
     fun setUp() {
-        PowerMockito.mockStatic(Log::class.java)
         testLoginCallback.reset()
         loginSessionCallback.reset()
         grabIdPartner.utility = utility

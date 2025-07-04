@@ -6,11 +6,11 @@ import com.grab.partner.sdk.GrabIdPartnerProtocol
 import com.grab.partner.sdk.models.GrabIdPartnerError
 import com.grab.partner.sdk.models.LoginSession
 import com.grab.partner.sdk.utils.IUtility
-import com.nhaarman.mockitokotlin2.argumentCaptor
-import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.never
-import com.nhaarman.mockitokotlin2.verify
-import com.nhaarman.mockitokotlin2.whenever
+import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.ConcurrentHashMap
