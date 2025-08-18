@@ -27,7 +27,7 @@ class Utility {
                 return null
             }
 
-            if (applicationInfo?.metaData == null) {
+            if (applicationInfo.metaData == null) {
                 return null
             }
 
