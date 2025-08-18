@@ -12,6 +12,7 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-parcelize'
 apply plugin: 'org.jetbrains.dokka'
 apply from: '../dependencies.gradle'
+apply plugin: 'jacoco'
 
 android {
     namespace 'com.grab.partner.sdk'
@@ -63,6 +64,8 @@ ext {
     licenseUrl = 'https://opensource.org/licenses/MIT'
     allLicenses = ["MIT"]
 }
+
+apply from: "$project.rootDir/jacoco.gradle"
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])

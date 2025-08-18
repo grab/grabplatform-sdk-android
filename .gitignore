@@ -52,3 +52,5 @@ app/google-services.json
 release/
 
 artifacts/
+
+htmlReport

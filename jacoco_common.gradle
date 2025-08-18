@@ -1,0 +1,68 @@
+def printDetails(reports) {
+    println "xml report: file://${reports.xml.outputLocation.getLocationOnly().get()}"
+    println "html report: file://${reports.html.getEntryPoint()}"
+}
+
+ext.printReport = { module, reports ->
+    printDetails(reports)
+    def result = printTotalCoverageFromXml(module, reports.xml.outputLocation.getAsFile().get())
+    println result
+    return result
+}
+
+// prints total coverage to console
+ext.printTotalCoverageFromXml = { String module, File jacocoTestReport ->
+    if (!jacocoTestReport.exists()) {
+        return new CoverageModuleItem(module : module)
+    }
+
+    def coverageType = 'LINE'
+    def slurper = new XmlSlurper()
+    slurper.setFeature('http://apache.org/xml/features/disallow-doctype-decl', false)
+    slurper.setFeature('http://apache.org/xml/features/nonvalidating/load-external-dtd', false)
+
+    def report = slurper.parse(jacocoTestReport)
+    Long missed = report.counter.find { it.'@type' == coverageType }.@missed.toLong()
+    Long covered = report.counter.find { it.'@type' == coverageType }.@covered.toLong()
+    if (missed == null || covered == null) return new CoverageModuleItem(module, null, null, null)
+    long total = missed + covered
+    double coverage = (100 / (total.doubleValue()) * covered).round(2)
+    def result = new CoverageModuleItem(module, covered, total, coverage)
+    return result
+}
+
+ext {
+    isTestableAndroid = { project ->
+        return project.plugins.hasPlugin("com.android.library")
+    }
+    isTestableJava = { project ->
+        return project.plugins.hasPlugin("java") || project.plugins.hasPlugin("kotlin") &&
+                !testableAndroid(project) && !project.plugins.hasPlugin("com.android.application")
+    }
+}
+
+class CoverageModuleItem {
+    public String module = null
+    public Long covered = 0
+    public Long total = 0
+    public Double coverage = 0.0
+    CoverageModuleItem(){}
+
+    CoverageModuleItem(String module, Long covered, Long total, Double coverage){
+        this.module = module
+        this.covered = covered
+        this.total = total
+        this.coverage = coverage
+    }
+
+    @Override
+    String toString() {
+        if(covered == null)
+            return "|$module|N/A|N/A|"
+        return "|$module|${covered}/${total}|${coverage}%|"
+    }
+
+    String toJson(){
+        return "{\"covered_lines\": ${covered}, \"name\": \"${module}\", \"total_lines\": ${total} }"
+    }
+}

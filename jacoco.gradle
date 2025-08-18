@@ -1,0 +1,152 @@
+apply from: "$project.rootDir/jacoco_common.gradle"
+
+project.tasks.register("jacocoUnitTestReport", JacocoReport) {
+    if (isTestableAndroid(project)) {
+        dependsOn(tasks.named("jacocoAdrTestReport"))
+    } else if (isTestableJava(project)) {
+        dependsOn(tasks.named("jacocoJarTestReport"))
+    }
+}
+
+task jacocoAdrTestReport(type: JacocoReport, dependsOn: 'testDebugUnitTest') {
+    reports{
+        xml.required = true
+        html.required = true
+    }
+
+    def jacocoFileFilter = [
+            '**/R.class',
+            '**/BR.class',
+            '**/R$*.class',
+            '**/*$ViewInjector*.*',
+            '**/*$ViewBinder*.*',
+            '**/BuildConfig.*',
+            '**/Manifest*.*',
+            // Ignore Dagger 2 generated code
+            '**/Dagger*.class',
+            '**/**_MembersInjector*.class',
+            '**/**Module_*.class',
+            '**/**_Factory*.class',
+            '**/**_ViewBinding*.class',
+            '**/**Binding*.class',
+            'android/databinding/**',
+            'android/databinding/**/*.class',
+            '**/android/databinding/*Binding.class',
+            '**/*Module.class',
+            '**/*Component.class',
+            '**/Mock*.class',
+            '**/DataBinderMapperImpl.class',
+            '**/DataBinderMapperImpl$*.class',
+            '**/generated/*',
+            '**/*$grab_*',
+            'kotlinx/*',
+            '**/androidTest/*',
+            '**/*$DefaultImpls.class',
+            // ignore Parcelable creator classes
+            '**/*$Creator.class',
+            '**/*$CREATOR.class',
+            // ignoring DI packages
+            '**/di/**',
+            // '**/widgets',
+    ]
+
+
+    def kotlinDebugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: jacocoFileFilter)
+    def mainSrc = "${project.projectDir}/src/main/java"
+
+    sourceDirectories.from = files([mainSrc])
+    classDirectories.from = files([kotlinDebugTree])
+    executionData.from = files("${buildDir}/jacoco/testDebugUnitTest.exec")
+
+    doLast {
+        def report = printReport(project.name, reports)
+        project.rootProject.utCoveredLine = project.rootProject.utCoveredLine.toLong() +
+                report.covered
+        project.rootProject.utTotalLine = project.rootProject.utTotalLine.toLong() + report.total
+        double ratio = rootProject.utCoveredLine.doubleValue() / rootProject.utTotalLine.
+                doubleValue() * 100
+        def formatStr = '%.2f%%'
+        def ratioStr = String.format(formatStr, ratio)
+        def dir = project.rootProject.file("build")
+        if (!dir.exists()) {
+            dir.mkdir()
+        }
+        def file =  project.rootProject.file("build/temp_ut_coverage.txt")
+        if (!file.exists()) {
+            file.createNewFile()
+        }
+        file.write ratioStr
+    }
+}
+
+task jacocoJarTestReport(type: JacocoReport, dependsOn: 'test') {
+
+    reports{
+        xml.required = true
+        html.required = true
+    }
+
+    def jacocoFileFilter = [
+            '**/R.class',
+            '**/BR.class',
+            '**/R$*.class',
+            '**/*$ViewInjector*.*',
+            '**/*$ViewBinder*.*',
+            '**/BuildConfig.*',
+            '**/Manifest*.*',
+            // Ignore Dagger 2 generated code
+            '**/Dagger*.class',
+            '**/**_MembersInjector*.class',
+            '**/**Module_*.class',
+            '**/**_Factory*.class',
+            '**/**_ViewBinding*.class',
+            '**/**Binding*.class',
+            'android/databinding/**',
+            'android/databinding/**/*.class',
+            '**/android/databinding/*Binding.class',
+            '**/*Module.class',
+            '**/*Component.class',
+            '**/Mock*.class',
+            '**/DataBinderMapperImpl.class',
+            '**/DataBinderMapperImpl$*.class',
+            '**/generated/*',
+            '**/*$grab_*',
+            'kotlinx/*',
+            '**/androidTest/*',
+            '**/*$DefaultImpls.class',
+            // ignore Parcelable creator classes
+            '**/*$Creator.class',
+            '**/*$CREATOR.class',
+            // ignoring DI packages
+            '**/di/**',
+    ]
+
+
+    def kotlinDebugTree = fileTree(dir: "${buildDir}/classes/kotlin/main", excludes:
+            jacocoFileFilter)
+    def mainSrc = "${project.projectDir}/src/main/java"
+
+    sourceDirectories.from = files([mainSrc])
+    classDirectories.from = files([kotlinDebugTree])
+    executionData.from = files("${buildDir}/jacoco/test.exec")
+
+    doLast {
+        def report = printReport(project.name, reports)
+        project.rootProject.utCoveredLine = project.rootProject.utCoveredLine.toLong() +
+                report.covered
+        project.rootProject.utTotalLine = project.rootProject.utTotalLine.toLong() + report.total
+        double ratio = rootProject.utCoveredLine.doubleValue() / rootProject.utTotalLine.
+                doubleValue() * 100
+        def formatStr = '%.2f%%'
+        def ratioStr = String.format(formatStr, ratio)
+        def dir = project.rootProject.file("build")
+        if (!dir.exists()) {
+            dir.mkdir()
+        }
+        def file =  project.rootProject.file("build/temp_ut_coverage.txt")
+        if (!file.exists()) {
+            file.createNewFile()
+        }
+        file.write ratioStr
+    }
+}

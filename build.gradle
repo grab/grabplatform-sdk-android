@@ -12,6 +12,8 @@ buildscript {
         android_plugin_version = '2.3.0'
         dokka_version = '1.7.10'
         publish_plugin_version = '1.1.0'
+        utCoveredLine = 0L
+        utTotalLine = 0L
     }
     repositories {
         google()
@@ -46,4 +48,17 @@ task clean(type: Delete) {
 }
 
 apply from: 'GrabIdPartnerSDK/scripts/base-publish.gradle'
+
+task printTotalUTCoverage() {
+    doLast {
+        def file = rootProject.file("build/temp_ut_coverage.txt")
+        if (file.exists()) {
+            def output = file.text
+            file.delete()
+            println output
+        } else {
+            println '0.0%'
+        }
+    }
+}
 
