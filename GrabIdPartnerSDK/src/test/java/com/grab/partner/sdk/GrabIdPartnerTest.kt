@@ -89,6 +89,32 @@ class GrabIdPartnerTest {
     }
 
     @Test
+    fun `verify loadLoginSession2 without initializing the SDK`() {
+        GrabIdPartner.isSdkInitialized = false
+        grabIdPartner.loadLoginSession(
+            TEST_RESPONSE_STATE,
+            FAKE_CLIENT_ID,
+            FAKE_REDIRECT_URI,
+            FAKE_DISCOVERY_URL,
+            PARTNER_SCOPE,
+            null,
+            null,
+            null,
+            null,
+            loginSessionCallback,
+            null,
+            true
+        )
+        val grabIdPartnerError = GrabIdPartnerError(
+            GrabIdPartnerErrorDomain.LOADLOGINSESSION,
+            GrabIdPartnerErrorCode.sdkNotInitialized,
+            CONST_READ_RESOURCE_STRING,
+            null
+        )
+        Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
+    }
+
+    @Test
     fun `verify loadLoginSession with null clientId`() {
         prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(null, null, null, null)
         val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidClientId, CONST_READ_RESOURCE_STRING, null)
@@ -99,6 +125,32 @@ class GrabIdPartnerTest {
     fun `verify loadLoginSession with empty clientId`() {
         prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo("", null, null, null)
         val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidClientId, CONST_READ_RESOURCE_STRING, null)
+        Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
+    }
+
+    @Test
+    fun `verify loadLoginSession2 with empty clientId`() {
+        GrabIdPartner.isSdkInitialized = true
+        grabIdPartner.loadLoginSession(
+            TEST_RESPONSE_STATE,
+            "",
+            FAKE_REDIRECT_URI,
+            FAKE_DISCOVERY_URL,
+            PARTNER_SCOPE,
+            null,
+            null,
+            null,
+            null,
+            loginSessionCallback,
+            null,
+            true
+        )
+        val grabIdPartnerError = GrabIdPartnerError(
+            GrabIdPartnerErrorDomain.LOADLOGINSESSION,
+            GrabIdPartnerErrorCode.invalidClientId,
+            CONST_READ_RESOURCE_STRING,
+            null
+        )
         Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
     }
 
@@ -117,6 +169,32 @@ class GrabIdPartnerTest {
     }
 
     @Test
+    fun `verify loadLoginSession2 with empty redirectUri`() {
+        GrabIdPartner.isSdkInitialized = true
+        grabIdPartner.loadLoginSession(
+            TEST_RESPONSE_STATE,
+            FAKE_CLIENT_ID,
+            "",
+            FAKE_DISCOVERY_URL,
+            PARTNER_SCOPE,
+            null,
+            null,
+            null,
+            null,
+            loginSessionCallback,
+            null,
+            true
+        )
+        val grabIdPartnerError = GrabIdPartnerError(
+            GrabIdPartnerErrorDomain.LOADLOGINSESSION,
+            GrabIdPartnerErrorCode.invalidRedirectURI,
+            CONST_READ_RESOURCE_STRING,
+            null
+        )
+        Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
+    }
+
+    @Test
     fun `verify loadLoginSession with null serviceDiscoveryUrl`() {
         prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(FAKE_CLIENT_ID, FAKE_REDIRECT_URI, null, null)
         val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
@@ -127,6 +205,32 @@ class GrabIdPartnerTest {
     fun `verify loadLoginSession with empty serviceDiscoveryUrl`() {
         prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(FAKE_CLIENT_ID, FAKE_REDIRECT_URI, "", null)
         val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.LOADLOGINSESSION, GrabIdPartnerErrorCode.invalidDiscoveryEndpoint, CONST_READ_RESOURCE_STRING, null)
+        Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
+    }
+
+    @Test
+    fun `verify loadLoginSession2 with empty serviceDiscoveryUrl`() {
+        GrabIdPartner.isSdkInitialized = true
+        grabIdPartner.loadLoginSession(
+            TEST_RESPONSE_STATE,
+            FAKE_CLIENT_ID,
+            FAKE_REDIRECT_URI,
+            "",
+            PARTNER_SCOPE,
+            null,
+            null,
+            null,
+            null,
+            loginSessionCallback,
+            null,
+            true
+        )
+        val grabIdPartnerError = GrabIdPartnerError(
+            GrabIdPartnerErrorDomain.LOADLOGINSESSION,
+            GrabIdPartnerErrorCode.invalidDiscoveryEndpoint,
+            CONST_READ_RESOURCE_STRING,
+            null
+        )
         Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
     }
 
@@ -146,14 +250,81 @@ class GrabIdPartnerTest {
     }
 
     @Test
+    fun `verify loadLoginSession2 with empty scope`() {
+        GrabIdPartner.isSdkInitialized = true
+        grabIdPartner.loadLoginSession(
+            TEST_RESPONSE_STATE,
+            FAKE_CLIENT_ID,
+            FAKE_REDIRECT_URI,
+            FAKE_DISCOVERY_URL,
+            "",
+            null,
+            null,
+            null,
+            null,
+            loginSessionCallback,
+            null,
+            true
+        )
+        val grabIdPartnerError = GrabIdPartnerError(
+            GrabIdPartnerErrorDomain.LOADLOGINSESSION,
+            GrabIdPartnerErrorCode.invalidPartnerScope,
+            CONST_READ_RESOURCE_STRING,
+            null
+        )
+        Assert.assertTrue(loginSessionCallback.verifyOnError(grabIdPartnerError))
+    }
+
+    @Test
     fun `verify loadLoginSession with required partner info`() {
         prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(FAKE_CLIENT_ID, FAKE_REDIRECT_URI, FAKE_DISCOVERY_URL, PARTNER_SCOPE)
         loginSessionCallback.verifyOnSuccess(1)
     }
 
     @Test
+    fun `verify loadLoginSession2 with required partner info`() {
+        GrabIdPartner.isSdkInitialized = true
+        grabIdPartner.loadLoginSession(
+            TEST_RESPONSE_STATE,
+            FAKE_CLIENT_ID,
+            FAKE_REDIRECT_URI,
+            FAKE_DISCOVERY_URL,
+            PARTNER_SCOPE,
+            null,
+            null,
+            null,
+            null,
+            loginSessionCallback,
+            null,
+            true
+        )
+        loginSessionCallback.verifyOnSuccess(1)
+    }
+
+    @Test
     fun `verify loginSession has required parameters after loadLoginSession`() {
         prerequisiteToValidateLoadLoginSessionWithDifferentPartnerinfo(FAKE_CLIENT_ID, FAKE_REDIRECT_URI, FAKE_DISCOVERY_URL, PARTNER_SCOPE)
+        loginSessionCallback.verifyOnSuccess(1)
+        loginSessionCallback.verifyAllRequiredParametersExists()
+    }
+
+    @Test
+    fun `verify loginSession has required parameters after loadLoginSession2`() {
+        GrabIdPartner.isSdkInitialized = true
+        grabIdPartner.loadLoginSession(
+            TEST_RESPONSE_STATE,
+            FAKE_CLIENT_ID,
+            FAKE_REDIRECT_URI,
+            FAKE_DISCOVERY_URL,
+            PARTNER_SCOPE,
+            null,
+            null,
+            null,
+            null,
+            loginSessionCallback,
+            null,
+            true
+        )
         loginSessionCallback.verifyOnSuccess(1)
         loginSessionCallback.verifyAllRequiredParametersExists()
     }
