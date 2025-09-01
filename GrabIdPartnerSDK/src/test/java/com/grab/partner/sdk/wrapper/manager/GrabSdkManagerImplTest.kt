@@ -91,6 +91,15 @@ class GrabSdkManagerImplTest {
         builder.loginSession = loginSession
         builder.listener = sessionCallbacks
         builder.exchangeRequired = exchangeRequired
+        builder.state = state
+        builder.clientId(clientId)
+        builder.redirectURI("testRedirectURI")
+        builder.scope("testScope")
+        builder.acrValues("testAcrValues")
+        builder.request("testRequest")
+        builder.loginHint("testLoginHint")
+        builder.idTokenHint("testIdTokenHint")
+        builder.serviceDiscoveryUrl("testServiceDiscoveryUrl")
         whenever(grabSdkManagerImpl.utility.getURLParam(GrabIdPartner.RESPONSE_TYPE, testResult)).thenReturn(code)
         whenever(grabSdkManagerImpl.utility.getURLParam(GrabIdPartner.RESPONSE_STATE, testResult)).thenReturn(state)
         whenever(grabSdkManagerImpl.sessions[state]).thenReturn(builder)
