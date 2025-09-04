@@ -10,8 +10,11 @@ package com.grab.partner.sdk.utils
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import com.google.gson.Gson
+import com.grab.partner.sdk.models.EMPTY_STRING_CONST
+import com.grab.partner.sdk.models.LoginSession
 import com.grab.partner.sdk.models.PlaystoreProtocol
 import com.grab.partner.sdk.models.ProtocolInfo
+import org.junit.Assert
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.junit.Test
@@ -73,6 +76,45 @@ class UtilityTest {
         var observer = utility.isPackageInstalled(createProtocolList(), packageManager).test()
         observer.assertComplete()
         observer.assertResult()
+    }
+
+    @Test
+    fun `test sorted scope string`() {
+        var scopeString = " "
+        val sortedScope1 = utility.sortedScopeString(scopeString)
+        Assert.assertEquals(sortedScope1, "")
+
+        scopeString = "ab cd ef gh"
+        val sortedScope2 = utility.sortedScopeString(scopeString)
+        Assert.assertEquals(sortedScope2, "gh_ef_cd_ab")
+    }
+
+    @Test
+    fun `test generateKeystoreAlias`() {
+        val loginSession = LoginSession()
+        loginSession.clientId = "testClientID"
+        loginSession.scope = "ab cd ef gh"
+        val alias = utility.generateKeystoreAlias(loginSession, ObjectType.LOGIN_SESSION)
+        Assert.assertEquals(alias, "testClientID_gh_ef_cd_ab_LOGIN_SESSION")
+    }
+
+    @Test
+    fun `test clone login session`() {
+        val source = LoginSession()
+        source.scope = "testScope"
+        val destination = LoginSession()
+        Assert.assertEquals(destination.scope, EMPTY_STRING_CONST)
+        utility.cloneLoginSession(source, destination)
+        Assert.assertEquals(destination.scope, "testScope")
+    }
+
+    @Test
+    fun `test clear login session`() {
+        val session = LoginSession()
+        session.scope = "testScope"
+        Assert.assertEquals(session.scope, "testScope")
+        utility.clearLoginSession(session)
+        Assert.assertEquals(session.scope, EMPTY_STRING_CONST)
     }
 
     private fun createProtocolList(): List<String> {
