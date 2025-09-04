@@ -17,4 +17,8 @@ debugTests:
   <<: *base_job
   stage: build
   script:
-    - ./gradlew test
+    - ./gradlew clean
+    - ./gradlew jacocoUnitTestReport
+    - export COVER_VAR=$(./gradlew -q printTotalUTCoverage)
+    - echo "UT Coverage:$COVER_VAR"
+  coverage: '/UT Coverage:(\d+\.?\d*)/'
