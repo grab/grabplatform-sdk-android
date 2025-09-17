@@ -938,8 +938,14 @@ class TestGetIdTokenInfoCallback : GetIdTokenInfoCallback {
 
     fun verifyOnSuccess(idTokenInfo: IdTokenInfo) {
         Assert.assertTrue(this.grabIdTokenInfo?.audience == idTokenInfo.audience &&
+                this.grabIdTokenInfo?.service == idTokenInfo.service &&
                 this.grabIdTokenInfo?.nonce == idTokenInfo.nonce &&
                 this.grabIdTokenInfo?.expiration == idTokenInfo.expiration &&
+                this.grabIdTokenInfo?.issueDate == idTokenInfo.issueDate &&
+                this.grabIdTokenInfo?.issuer == idTokenInfo.issuer &&
+                this.grabIdTokenInfo?.tokenId == idTokenInfo.tokenId &&
+                this.grabIdTokenInfo?.partnerId == idTokenInfo.partnerId &&
+                this.grabIdTokenInfo?.partnerUserId == idTokenInfo.partnerUserId &&
                 this.grabIdTokenInfo?.notValidBefore == idTokenInfo.notValidBefore)
     }
 }
