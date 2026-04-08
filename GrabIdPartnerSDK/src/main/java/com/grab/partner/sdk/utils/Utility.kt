@@ -246,7 +246,7 @@ internal class Utility : IUtility {
             return ""
         }
         // split the scope with space and then sort the list
-        var scopeArray = scope.toLowerCase().split(" ", ignoreCase = true)
+        var scopeArray = scope.lowercase().split(" ", ignoreCase = true)
         scopeArray = scopeArray.sortedDescending()
 
         return scopeArray.joinToString("_")
