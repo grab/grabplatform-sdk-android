@@ -7,12 +7,11 @@
   ~
   -->
 
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <!-- Base application theme. -->
     <style name="GrabIdPartnerSDKTheme" parent="Theme.AppCompat.Light">
         <!-- This is the styling for action bar -->
         <item name="actionBarStyle">@style/GrabIdPartnerSDKActionBar</item>
-        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
     </style>
 
     <style name="GrabIdPartnerSDKActionBar" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
