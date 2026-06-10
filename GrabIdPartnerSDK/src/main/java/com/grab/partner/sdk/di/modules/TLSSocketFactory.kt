@@ -23,6 +23,7 @@ import javax.net.ssl.SSLSocketFactory
 internal class TLSSocketFactory @Throws(KeyManagementException::class, NoSuchAlgorithmException::class)
 constructor() : SSLSocketFactory(), Parcelable {
     private val delegate: SSLSocketFactory
+    private val preferredProtocols = listOf("TLSv1.2", "TLSv1.3")
 
     constructor(parcel: Parcel) : this()
 
@@ -72,7 +73,11 @@ constructor() : SSLSocketFactory(), Parcelable {
 
     private fun enableTLSOnSocket(socket: Socket?): Socket? {
         if (socket != null && socket is SSLSocket) {
-            socket.enabledProtocols = arrayOf("TLSv1.1", "TLSv1.2")
+            val supportedProtocols = socket.supportedProtocols.toSet()
+            val enabledProtocols = preferredProtocols.filter { supportedProtocols.contains(it) }
+            if (enabledProtocols.isNotEmpty()) {
+                socket.enabledProtocols = enabledProtocols.toTypedArray()
+            }
         }
         return socket
     }

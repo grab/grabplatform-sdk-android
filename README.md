@@ -11,8 +11,8 @@ To run the example project, clone the repo, and run the app in the emulator and 
 
 ## Requirements
 - API level: minimum API level supported by SDK is 21
-- Android Build Tool 35.0.1
-- Android 35 support
+- Android Build Tool 36.0.0
+- Android 36 support
 
 
 ## Installation GrabID Partner SDK

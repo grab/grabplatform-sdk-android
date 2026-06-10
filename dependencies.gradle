@@ -5,9 +5,9 @@ ext {
     android_maven_gradle_plugin_version = '2.1'
     rxkotlin_version = '2.4.0'
     androidMinSdkVersion = 21
-    androidCompileSdkVersion = 35
-    androidBuildToolsVersion = "35.0.1"
-    androidTargetSdkVersion = 35
+    androidCompileSdkVersion = 36
+    androidBuildToolsVersion = "36.0.0"
+    androidTargetSdkVersion = 36
     javaVersion = JavaVersion.VERSION_11
 
     appApplicationId = "com.blockchain"
