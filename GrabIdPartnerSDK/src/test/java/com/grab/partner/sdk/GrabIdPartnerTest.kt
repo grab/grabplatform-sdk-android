@@ -500,6 +500,38 @@ class GrabIdPartnerTest {
     }
 
     @Test
+    fun `verify login with no cache and null client_public_info_endpoint return the specific error`() {
+        loginSession.clientId = FAKE_CLIENT_ID
+        loginSession.redirectUri = FAKE_REDIRECT_URI
+        loginSession.scope = PARTNER_SCOPE
+        loginSession.serviceDiscoveryUrl = FAKE_DISCOVERY_URL
+        utility.setObjectToSharedPref(null)
+        grabAuthRepository.setCallDiscovery(Observable.just(DiscoveryResponse(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT, null)))
+        grabAuthRepository.setFetchClientPublicInfo(Observable.error(Throwable()))
+
+        grabIdPartner.login(loginSession, context, testLoginCallback)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.CLIENTPUBLICINFO, GrabIdPartnerErrorCode.errorInClientPublicInfoEndpoint, "$CONST_READ_RESOURCE_STRING $CONST_READ_RESOURCE_STRING ", null)
+        Assert.assertTrue(testLoginCallback.verifyOnError(grabIdPartnerError))
+        testLoginCallback.verifyOnSuccess(0)
+    }
+
+    @Test
+    fun `verify loginV2 with no cache and null client_public_info_endpoint return the specific error`() {
+        loginSession.clientId = FAKE_CLIENT_ID
+        loginSession.redirectUri = FAKE_REDIRECT_URI
+        loginSession.scope = PARTNER_SCOPE
+        loginSession.serviceDiscoveryUrl = FAKE_DISCOVERY_URL
+        utility.setObjectToSharedPref(null)
+        grabAuthRepository.setCallDiscovery(Observable.just(DiscoveryResponse(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT, null)))
+        grabAuthRepository.setFetchClientPublicInfo(Observable.error(Throwable()))
+
+        grabIdPartner.loginV2(loginSession, activity, testLoginCallbackV2)
+        val grabIdPartnerError = GrabIdPartnerError(GrabIdPartnerErrorDomain.CLIENTPUBLICINFO, GrabIdPartnerErrorCode.errorInClientPublicInfoEndpoint, "$CONST_READ_RESOURCE_STRING $CONST_READ_RESOURCE_STRING ", null)
+        Assert.assertTrue(testLoginCallbackV2.verifyOnError(grabIdPartnerError))
+        testLoginCallbackV2.verifyOnSuccess(0)
+    }
+
+    @Test
     fun `verify login with no cache and discovery endpoints`() {
         prerequisiteToValidateCallDiscovery(FAKE_AUTH_ENDPOINT, FAKE_TOKEN_ENDPOINT, FAKE_ID_TOKEN_ENDPOINT, FAKE_CLIENT_PUBLIC_INFO_ENDPOINT)
         verify(launchAppForAuthorization, times(1)).launchOAuthFlow(any(), any(), any(), eq(false))
@@ -686,6 +718,7 @@ class GrabIdPartnerTest {
         loginSession.idTokenVerificationEndpoint = FAKE_ID_TOKEN_ENDPOINT
 
         val idTokenInfo = IdTokenInfo()
+        idTokenInfo.nonceInternal = loginSession.nonce
         grabAuthRepository.setGetIdTokenInfo(Observable.just(idTokenInfo))
         grabIdPartner.getIdTokenInfo(loginSession, testGetIdTokenInfoCallback)
 

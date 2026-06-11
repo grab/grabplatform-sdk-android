@@ -12,11 +12,11 @@ import com.google.gson.annotations.SerializedName
 
 internal data class DiscoveryResponse(
         @SerializedName("authorization_endpoint")
-        val authorization_endpoint: String? = "",
+        val authorization_endpoint: String? = null,
         @SerializedName("token_endpoint")
-        val token_endpoint: String? = "",
+        val token_endpoint: String? = null,
         @SerializedName("id_token_verification_endpoint")
-        val id_token_verification_endpoint: String? = "",
+        val id_token_verification_endpoint: String? = null,
         @SerializedName("client_public_info_endpoint")
-        var client_public_info_endpoint: String = ""
+        var client_public_info_endpoint: String? = null
 )

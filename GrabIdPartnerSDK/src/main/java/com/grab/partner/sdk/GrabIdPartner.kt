@@ -627,8 +627,11 @@ class GrabIdPartner private constructor() : GrabIdPartnerProtocol {
         compositeDisposable.add(grabAuthRepository.callDiscovery(loginSession.serviceDiscoveryUrl)
                 .flatMap { discoveryResponse ->
                     // replace "{client_id}" string to get the final client_public_info_endpoint url
-                    discoveryResponse.client_public_info_endpoint = discoveryResponse.client_public_info_endpoint.replace(CLIENT_ID, loginSession.clientId)
-                    grabAuthRepository.fetchClientPublicInfo(discoveryResponse.client_public_info_endpoint)
+                    val clientPublicInfoEndpoint = discoveryResponse.client_public_info_endpoint
+                        .orEmpty()
+                        .replace(CLIENT_ID, loginSession.clientId)
+                    discoveryResponse.client_public_info_endpoint = clientPublicInfoEndpoint
+                    grabAuthRepository.fetchClientPublicInfo(clientPublicInfoEndpoint)
                             .map { discoveryResponse to it }
                             .onErrorResumeNext { it: Throwable ->
                                 Observable.error<Pair<DiscoveryResponse, ClientPublicInfo>>(CustomInternalError(domain = GrabIdPartnerErrorDomain.CLIENTPUBLICINFO,

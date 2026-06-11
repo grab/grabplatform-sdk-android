@@ -13,11 +13,11 @@ import java.util.Date
 
 class IdTokenInfo {
     @SerializedName("aud")
-    internal var audienceInternal: String? = ""
+    internal var audienceInternal: String? = null
     val audience get() = audienceInternal
 
     @SerializedName("svc")
-    internal var serviceInternal: String? = ""
+    internal var serviceInternal: String? = null
     val service get() = serviceInternal
 
     @SerializedName("nbf")
@@ -33,22 +33,22 @@ class IdTokenInfo {
     val issueDate get() = issueDateInternal
 
     @SerializedName("iss")
-    internal var issuerInternal: String? = ""
+    internal var issuerInternal: String? = null
     val issuer get() = issuerInternal
 
     @SerializedName("jti")
-    internal var tokenIdInternal: String? = ""
+    internal var tokenIdInternal: String? = null
     val tokenId get() = tokenIdInternal
 
     @SerializedName("pid")
-    internal var partnerIdInternal: String? = ""
+    internal var partnerIdInternal: String? = null
     val partnerId get() = partnerIdInternal
 
     @SerializedName("sub")
-    internal var partnerUserIdInternal: String? = ""
+    internal var partnerUserIdInternal: String? = null
     val partnerUserId get() = partnerUserIdInternal
 
     @SerializedName("nonce")
-    internal var nonceInternal: String? = ""
+    internal var nonceInternal: String? = null
     val nonce get() = nonceInternal
 }

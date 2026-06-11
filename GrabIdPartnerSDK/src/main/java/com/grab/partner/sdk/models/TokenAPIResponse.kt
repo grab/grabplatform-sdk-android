@@ -12,13 +12,13 @@ import com.google.gson.annotations.SerializedName
 
 internal data class TokenAPIResponse(
         @SerializedName("access_token")
-        val access_token: String?="",
+        val access_token: String? = null,
         @SerializedName("token_type")
-        val token_type: String?="",
+        val token_type: String? = null,
         @SerializedName("expires_in")
-        val expires_in: String?= "",
+        val expires_in: String? = null,
         @SerializedName("id_token")
-        val id_token: String?="",
+        val id_token: String? = null,
         @SerializedName("refresh_token")
-        val refresh_token: String?=""
+        val refresh_token: String? = null
 )
