@@ -1,7 +1,6 @@
 package com.grab.partner.sdk.wrapper.deeplink
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.grab.partner.sdk.GrabIdPartner
@@ -23,15 +22,12 @@ class DeepLinkActivity : AppCompatActivity() {
     }
 
     /**
-     * Reading intent extras deserializes the whole bundle. On Android 13 and below the framework
-     * deserializes before validating the expected type, so a malicious intent can run arbitrary
-     * code. Only keep extras on Android 14+, where the framework validates the serialized class
-     * name before reading the object bytes.
+     * External apps can launch this exported deep-link activity with attacker-controlled extras.
+     * Any downstream library/component reading extras may trigger deserialization implicitly.
+     * This flow only needs action/data, so clear all extras defensively on every Android version.
      */
     private fun clearUnsafeIntentExtras(intent: Intent) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            intent.replaceExtras(null)
-        }
+        intent.replaceExtras(null)
     }
 
     private fun getRedirectUrl(intent: Intent) {
